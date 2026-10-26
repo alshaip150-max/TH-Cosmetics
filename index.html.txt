@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TH Cosmetics</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Cairo', sans-serif; }
+  </style>
+</head>
+<body class="bg-gray-50">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    const INITIAL_PRODUCTS = [
+      { id: 1, name: "سيروم الهيالورونيك أسيد", price: 350, category: "العناية بالبشرة", image: "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=500", stock: 15 },
+      { id: 2, name: "كريم مرطب وفيتامين C", price: 280, category: "العناية بالبشرة", image: "https://images.unsplash.com/photo-1608248597261-8f657a840e69?w=500", stock: 10 },
+      { id: 3, name: "أحمر شفاة مات أنيق", price: 190, category: "المكياج", image: "https://images.unsplash.com/photo-1586495777744-4413f21062fa?w=500", stock: 25 },
+      { id: 4, name: "زيت الشعر الطبيعي المغذي", price: 420, category: "العناية بالشعر", image: "https://images.unsplash.com/photo-1608248543803-ba4f8c70ae0b?w=500", stock: 8 },
+      { id: 5, name: "واقي شمس فلود 50+", price: 310, category: "العناية بالبشرة", image: "https://images.unsplash.com/photo-1598440947619-2c35fc9aa908?w=500", stock: 18 }
+    ];
+
+    function App() {
+      const [products, setProducts] = useState(() => {
+        const saved = localStorage.getItem('th_beauty_products');
+        return saved ? JSON.parse(saved) : INITIAL_PRODUCTS;
+      });
+
+      const [orders, setOrders] = useState(() => {
+        const saved = localStorage.getItem('th_beauty_orders');
+        return saved ? JSON.parse(saved) : [];
+      });
+
+      const [cart, setCart] = useState([]);
+      const [isAdmin, setIsAdmin] = useState(false);
+      const [passwordInput, setPasswordInput] = useState('');
+      const [showLoginModal, setShowLoginModal] = useState(false);
+      const [categoryFilter, setCategoryFilter] = useState('الكل');
+      const [checkoutStep, setCheckoutStep] = useState('cart'); 
+      const [paymentMethod, setPaymentMethod] = useState('cod'); 
+      const [customerInfo, setCustomerInfo] = useState({ name: '', phone: '', address: '' });
+      const [newProd, setNewProd] = useState({ name: '', price: '', category: 'العناية بالبشرة', image: '', stock: 10 });
+      const [errorMsg, setErrorMsg] = useState('');
+
+      useEffect(() => {
+        localStorage.setItem('th_beauty_products', JSON.stringify(products));
+      }, [products]);
+
+      useEffect(() => {
+        localStorage.setItem('th_beauty_orders', JSON.stringify(orders));
+      }, [orders]);
+
+      const addToCart = (prod) => {
+        setCart(prev => {
+          const exist = prev.find(item => item.id === prod.id);
+          if (exist) {
+            return prev.map(item => item.id === prod.id ? { ...item, qty: item.qty + 1 } : item);
+          }
+          return [...prev, { ...prod, qty: 1 }];
+        });
+      };
+
+      const handleAddProduct = (e) => {
+        e.preventDefault();
+        if (!newProd.name || !newProd.price) return;
+        const created = { ...newProd, id: Date.now(), price: Number(newProd.price), stock: Number(newProd.stock) };
+        setProducts([...products, created]);
+        setNewProd({ name: '', price: '', category: 'العناية بالبشرة', image: '', stock: 10 });
+        alert('تمت إضافة المنتج بنجاح للقائمة!');
+      };
+
+      const handleDeleteProduct = (id) => {
+        if (confirm('هل أنت متأكد من حذف هذا المنتج؟')) {
+          setProducts(products.filter(p => p.id !== id));
+        }
+      };
+
+      const handleCheckoutSubmit = (e) => {
+        e.preventDefault();
+        if (!customerInfo.name || !customerInfo.phone || !customerInfo.address) {
+          setErrorMsg('برجاء إكمال جميع بيانات الشحن');
+          return;
+        }
+
+        const newOrder = {
+          id: Date.now(),
+          date: new Date().toLocaleString('ar-EG'),
+          customer: customerInfo,
+          items: cart,
+          total: totalAmount,
+          payment: paymentMethod === 'cod' ? 'دفع عند الاستلام' : 'دفع أونلاين بالبطاقة',
+          status: 'جديد'
+        };
+
+        setOrders([newOrder, ...orders]);
+        setErrorMsg('');
+        setCheckoutStep('success');
+      };
+
+      const totalAmount = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+      const filteredProducts = categoryFilter === 'الكل' ? products : products.filter(p => p.category === categoryFilter);
+
+      return (
+        <div className="min-h-screen pb-12">
+          {/* Header */}
+          <header className="bg-white border-b sticky top-0 z-40 shadow-sm">
+            <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+              <div className="flex items-center space-x-3 space-x-reverse">
+                <span className="text-2xl font-bold text-rose-600">TH COSMETICS</span>
+              </div>
+              
+              <div className="flex items-center gap-3">
+                {!isAdmin ? (
+                  <>
+                    <button 
+                      onClick={() => setCheckoutStep('cart')}
+                      className="relative bg-rose-50 text-rose-600 px-4 py-2 rounded-full flex items-center gap-2 font-medium"
+                    >
+                      🛒 السلة ({cart.reduce((a,b)=>a+b.qty,0)})
+                    </button>
+                    <button 
+                      onClick={() => setShowLoginModal(true)} 
+                      className="text-xs bg-gray-100 text-gray-700 px-3 py-2 rounded-lg font-medium hover:bg-gray-200"
+                    >
+                      🔐 دخول الأدمن
+                    </button>
+                  </>
+                ) : (
+                  <button 
+                    onClick={() => setIsAdmin(false)} 
+                    className="text-sm bg-rose-600 text-white px-4 py-2 rounded-xl font-bold"
+                  >
+                    الخروج من لوحة الأدمن 🚪
+                  </button>
+                )}
+              </div>
+            </div>
+          </header>
+
+          <main className="max-w-6xl mx-auto px-4 mt-6">
+            {/* Modal دخول الأدمن */}
+            {showLoginModal && (
+              <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                <div className="bg-white p-6 rounded-2xl max-w-sm w-full space-y-4 shadow-xl">
+                  <h3 className="text-lg font-bold">تسجيل دخول المسؤول (الأدمن)</h3>
+                  <input 
+                    type="password" 
+                    placeholder="كلمة السر (admin123)"
+                    value={passwordInput}
+                    onChange={(e) => setPasswordInput(e.target.value)}
+                    className="w-full border p-2.5 rounded-xl"
+                  />
+                  <div className="flex gap-2">
+                    <button onClick={() => {
+                      if (passwordInput === 'admin123') { setIsAdmin(true); setShowLoginModal(false); setPasswordInput(''); }
+                      else alert('كلمة السر خاطئة');
+                    }} className="flex-1 bg-rose-600 text-white font-bold py-2.5 rounded-xl">دخول</button>
+                    <button onClick={() => setShowLoginModal(false)} className="flex-1 bg-gray-100 py-2.5 rounded-xl font-medium">إلغاء</button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* لوحة التحكم للأدمن فقط (عرض الأوردرات وإدارة المنتجات) */}
+            {isAdmin && (
+              <div className="space-y-8 mb-10">
+                {/* قسم استقبال الأوردرات */}
+                <div className="bg-white border-2 border-rose-500 p-6 rounded-2xl shadow-md">
+                  <h2 className="text-xl font-bold text-rose-900 mb-4 flex items-center gap-2">
+                    📥 أوردرات العملاء الواردة ({orders.length})
+                  </h2>
+                  {orders.length === 0 ? (
+                    <p className="text-gray-500 text-sm">لم يتم استلام أي أوردرات حتى الآن.</p>
+                  ) : (
+                    <div className="space-y-4">
+                      {orders.map(order => (
+                        <div key={order.id} className="bg-rose-50/60 p-4 rounded-xl border border-rose-100 space-y-2">
+                          <div className="flex justify-between items-center text-sm font-semibold text-gray-700 border-b pb-2">
+                            <span>رقم الطلب: #{order.id}</span>
+                            <span className="text-gray-500">{order.date}</span>
+                            <span className="bg-rose-600 text-white px-2.5 py-0.5 rounded-full text-xs">{order.payment}</span>
+                          </div>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                            <p><strong>العميل:</strong> {order.customer.name}</p>
+                            <p><strong>الهاتف:</strong> {order.customer.phone}</p>
+                            <p className="md:col-span-2"><strong>العنوان:</strong> {order.customer.address}</p>
+                          </div>
+                          <div className="bg-white p-3 rounded-lg border mt-2">
+                            <p className="font-bold text-xs text-rose-700 mb-1">المنتجات المطلوبة:</p>
+                            <ul className="text-xs space-y-1">
+                              {order.items.map((it, idx) => (
+                                <li key={idx} className="flex justify-between">
+                                  <span>{it.name} (×{it.qty})</span>
+                                  <span className="font-bold">{it.price * it.qty} ج.م</span>
+                                </li>
+                              ))}
+                            </ul>
+                            <div className="border-t mt-2 pt-2 flex justify-between font-bold text-sm">
+                              <span>الإجمالي المدفوع:</span>
+                              <span className="text-rose-600">{order.total} ج.م</span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* قسم إضافة منتجات جديدة */}
+                <div className="bg-rose-50 border border-rose-200 p-6 rounded-2xl shadow-sm">
+                  <h2 className="text-xl font-bold text-rose-900 mb-4">✨ إضافة منتج جديد للمتجر</h2>
+                  <form onSubmit={handleAddProduct} className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <input type="text" placeholder="اسم المنتج" value={newProd.name} onChange={e=>setNewProd({...newProd, name: e.target.value})} className="p-2.5 border rounded-xl bg-white" required />
+                    <input type="number" placeholder="السعر (ج.م)" value={newProd.price} onChange={e=>setNewProd({...newProd, price: e.target.value})} className="p-2.5 border rounded-xl bg-white" required />
+                    <select value={newProd.category} onChange={e=>setNewProd({...newProd, category: e.target.value})} className="p-2.5 border rounded-xl bg-white">
+                      <option value="العناية بالبشرة">العناية بالبشرة</option>
+                      <option value="المكياج">المكياج</option>
+                      <option value="العناية بالشعر">العناية بالشعر</option>
+                    </select>
+                    <input type="url" placeholder="رابط صورة المنتج (URL)" value={newProd.image} onChange={e=>setNewProd({...newProd, image: e.target.value})} className="p-2.5 border rounded-xl md:col-span-2 bg-white" />
+                    <button type="submit" className="bg-rose-600 text-white font-bold py-2.5 rounded-xl hover:bg-rose-700">حفظ ونشر المنتج للمتجر</button>
+                  </form>
+                </div>
+              </div>
+            )}
+
+            {/* صفحة العميل المتجر الرئيسي */}
+            {checkoutStep === 'cart' && (
+              <div>
+                <div className="flex gap-2 overflow-x-auto pb-4 mb-6">
+                  {['الكل', 'العناية بالبشرة', 'المكياج', 'العناية بالشعر'].map(cat => (
+                    <button key={cat} onClick={() => setCategoryFilter(cat)} className={`px-4 py-2 rounded-full font-medium whitespace-nowrap ${categoryFilter === cat ? 'bg-rose-600 text-white' : 'bg-white text-gray-600 border'}`}>
+                      {cat}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                  {filteredProducts.map(p => (
+                    <div key={p.id} className="bg-white rounded-2xl border p-4 flex flex-col justify-between shadow-sm">
+                      <div>
+                        <img src={p.image || 'https://via.placeholder.com/300'} alt={p.name} className="w-full h-48 object-cover rounded-xl mb-3" />
+                        <span className="text-xs text-rose-500 font-semibold bg-rose-50 px-2.5 py-1 rounded-full">{p.category}</span>
+                        <h3 className="font-bold text-gray-800 text-lg mt-2">{p.name}</h3>
+                        <p className="text-rose-600 font-bold mt-1 text-xl">{p.price} ج.م</p>
+                      </div>
+
+                      <div className="mt-4 flex gap-2">
+                        <button onClick={() => addToCart(p)} className="flex-1 bg-rose-600 text-white font-semibold py-2.5 rounded-xl hover:bg-rose-700">
+                          إضافة للسلة 🛒
+                        </button>
+                        {isAdmin && (
+                          <button onClick={() => handleDeleteProduct(p.id)} className="bg-red-50 text-red-600 px-3 rounded-xl font-bold">حذف</button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* شاشة اتمام الدفع والأوردر */}
+            {checkoutStep === 'checkout' && (
+              <div className="max-w-xl mx-auto bg-white p-6 rounded-2xl border shadow-sm">
+                <h2 className="text-xl font-bold mb-4">إتمام الطلب والدفع</h2>
+                {errorMsg && <div className="bg-red-50 text-red-600 p-3 rounded-xl mb-4 text-sm">{errorMsg}</div>}
+                <form onSubmit={handleCheckoutSubmit} className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-1">الاسم بالكامل</label>
+                    <input type="text" required className="w-full border p-2.5 rounded-xl" value={customerInfo.name} onChange={e=>setCustomerInfo({...customerInfo, name: e.target.value})} />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">رقم الهاتف</label>
+                    <input type="text" required placeholder="01xxxxxxxx" className="w-full border p-2.5 rounded-xl" value={customerInfo.phone} onChange={e=>setCustomerInfo({...customerInfo, phone: e.target.value})} />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">عنوان التوصيل بالتفصيل</label>
+                    <textarea required className="w-full border p-2.5 rounded-xl" value={customerInfo.address} onChange={e=>setCustomerInfo({...customerInfo, address: e.target.value})}></textarea>
+                  </div>
+
+                  <h3 className="font-bold pt-2">طريقة الدفع</h3>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button type="button" onClick={() => setPaymentMethod('cod')} className={`p-4 border rounded-xl text-center font-bold ${paymentMethod === 'cod' ? 'border-rose-600 bg-rose-50 text-rose-600' : ''}`}>
+                      💵 دفع عند الاستلام
+                    </button>
+                    <button type="button" onClick={() => setPaymentMethod('card')} className={`p-4 border rounded-xl text-center font-bold ${paymentMethod === 'card' ? 'border-rose-600 bg-rose-50 text-rose-600' : ''}`}>
+                      💳 دفع أونلاين / بطاقة
+                    </button>
+                  </div>
+
+                  {paymentMethod === 'card' && (
+                    <div className="bg-gray-50 p-4 rounded-xl border space-y-3">
+                      <input type="text" placeholder="رقم البطاقة (16 رقم)" className="w-full border p-2 rounded-lg bg-white" />
+                      <div className="flex gap-2">
+                        <input type="text" placeholder="MM/YY" className="w-1/2 border p-2 rounded-lg bg-white" />
+                        <input type="text" placeholder="CVV" className="w-1/2 border p-2 rounded-lg bg-white" />
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="border-t pt-4">
+                    <div className="flex justify-between font-bold text-lg mb-4">
+                      <span>إجمالي المطلوب:</span>
+                      <span className="text-rose-600">{totalAmount} ج.م</span>
+                    </div>
+                    <button type="submit" className="w-full bg-rose-600 text-white font-bold py-3 rounded-xl hover:bg-rose-700">
+                      تأكيد الطلب الآن ✨
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
+
+            {/* شاشة النجاح */}
+            {checkoutStep === 'success' && (
+              <div className="max-w-md mx-auto bg-white p-8 rounded-2xl border text-center space-y-4">
+                <div className="text-5xl">🎉</div>
+                <h2 className="text-2xl font-bold text-emerald-600">تم استلام طلبك بنجاح!</h2>
+                <p className="text-gray-600">شكراً لتسوقك معنا، تم إرسال الأوردر وسيتم التواصل معك لتأكيد الشحن.</p>
+                <button onClick={() => { setCart([]); setCheckoutStep('cart'); }} className="bg-rose-600 text-white px-6 py-2.5 rounded-xl font-bold">
+                  العودة للمتجر
+                </button>
+              </div>
+            )}
+          </main>
+
+          {/* سلة المشتريات التفاعلية السفلية للعميل */}
+          {cart.length > 0 && checkoutStep === 'cart' && !isAdmin && (
+            <div className="fixed bottom-4 left-4 right-4 max-w-lg mx-auto bg-gray-900 text-white p-4 rounded-2xl shadow-xl flex items-center justify-between z-30">
+              <div>
+                <p className="text-xs text-gray-400">الإجمالي ({cart.reduce((a,b)=>a+b.qty,0)} منتج)</p>
+                <p className="text-xl font-bold text-rose-400">{totalAmount} ج.م</p>
+              </div>
+              <button onClick={() => setCheckoutStep('checkout')} className="bg-rose-600 hover:bg-rose-500 text-white font-bold px-6 py-2.5 rounded-xl">
+                متابعة الشراء ⬅️
+              </button>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>
