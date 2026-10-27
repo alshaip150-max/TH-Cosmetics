@@ -10,9 +10,12 @@
 </head>
 <body class="bg-pink-50 text-gray-800">
 
-    <!-- Header (للعملاء فقط بدون أي أزرار أدمن) -->
+    <!-- Header -->
     <header class="bg-white shadow-md p-4 flex justify-between items-center sticky top-0 z-50">
-        <h1 class="text-xl font-bold text-pink-600">TH Cosmetics 💄</h1>
+        <div class="flex items-center gap-3">
+            <img id="storeLogoImg" src="https://images.unsplash.com/photo-1586495777744-4413f21062fa?auto=format&fit=crop&w=100&q=80" alt="Logo" class="w-10 h-10 object-cover rounded-full border border-pink-300">
+            <h1 class="text-xl font-bold text-pink-600">TH Cosmetics 💄</h1>
+        </div>
         <span class="text-xs bg-pink-100 text-pink-600 px-3 py-1 rounded-full font-bold">متجر التجميل والعناية</span>
     </header>
 
@@ -49,26 +52,43 @@
     </main>
 
     <script>
-        let defaultProducts = [
-            { id: 1, name: 'سيروم أنوا بيتش (Anua Peach 70)', price: 450, category: 'العناية بالبشرة', image: 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=300&q=80' },
-            { id: 2, name: 'كولاجين البرتقال الطبيعي', price: 350, category: 'العناية بالشعر', image: 'https://images.unsplash.com/photo-1608248597359-9945c57b7852?auto=format&fit=crop&w=300&q=80' },
-            { id: 3, name: 'مرطب الشفاه الكوري', price: 200, category: 'المكياج', image: 'https://images.unsplash.com/photo-1586495777744-4413f21062fa?auto=format&fit=crop&w=300&q=80' }
-        ];
-
         let cart = [];
 
         window.onload = function() {
-            const savedProducts = localStorage.getItem('th_products');
-            if (savedProducts) {
-                try { defaultProducts = JSON.parse(savedProducts); } catch(e) {}
-            }
+            loadStoreLogo();
             renderProducts();
             renderCart();
         };
 
+        function loadStoreLogo() {
+            const savedLogo = localStorage.getItem('th_logo');
+            if (savedLogo) {
+                document.getElementById('storeLogoImg').src = savedLogo;
+            }
+        }
+
+        function getProducts() {
+            let defaultProducts = [
+                { id: 1, name: 'سيروم أنوا بيتش (Anua Peach 70)', price: 450, category: 'العناية بالبشرة', image: 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=300&q=80' },
+                { id: 2, name: 'كولاجين البرتقال الطبيعي', price: 350, category: 'العناية بالشعر', image: 'https://images.unsplash.com/photo-1608248597359-9945c57b7852?auto=format&fit=crop&w=300&q=80' },
+                { id: 3, name: 'مرطب الشفاه الكوري', price: 200, category: 'المكياج', image: 'https://images.unsplash.com/photo-1586495777744-4413f21062fa?auto=format&fit=crop&w=300&q=80' }
+            ];
+
+            const savedProducts = localStorage.getItem('th_products');
+            if (savedProducts) {
+                try {
+                    const parsed = JSON.parse(savedProducts);
+                    if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+                } catch(e) {}
+            }
+            return defaultProducts;
+        }
+
         function renderProducts() {
             const container = document.getElementById('productsGrid');
-            container.innerHTML = defaultProducts.map(p => `
+            const products = getProducts();
+
+            container.innerHTML = products.map(p => `
                 <div class="bg-white p-4 rounded-xl shadow flex gap-4 items-center border border-gray-100">
                     <img src="${p.image}" alt="${p.name}" class="w-20 h-20 object-cover rounded-lg">
                     <div class="flex-1">
@@ -82,7 +102,8 @@
         }
 
         function addToCart(productId) {
-            const product = defaultProducts.find(p => p.id === productId);
+            const products = getProducts();
+            const product = products.find(p => p.id === productId);
             if (product) {
                 cart.push(product);
                 renderCart();
@@ -128,7 +149,6 @@
 
         function submitOrder() {
             const name = document.getElementById('custName').value.trim();
-            thePhone = document.getElementById('custPhone').value.trim();
             const phone = document.getElementById('custPhone').value.trim();
             const address = document.getElementById('custAddress').value.trim();
 
