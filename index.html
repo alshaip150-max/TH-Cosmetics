@@ -58,6 +58,8 @@
             loadStoreLogo();
             renderProducts();
             renderCart();
+            // تحديث المنتجات تلقائياً كل ثانية لضمان ظهور أي تعديل فورا
+            setInterval(renderProducts, 1000);
         };
 
         function loadStoreLogo() {
@@ -90,17 +92,22 @@
             const container = document.getElementById('productsGrid');
             const products = getProducts();
 
-            container.innerHTML = products.map(p => `
-                <div class="bg-white p-4 rounded-xl shadow flex gap-4 items-center border border-gray-100">
+            // منع إعادة رسم المنتجات لو لم يحدث تغيير لعدم إزعاج المستخدم
+            const currentHTML = products.map(p => `
+                <div class="bg-white p-4 rounded-xl shadow flex gap-4 items-center border border-gray-150">
                     <img src="${p.image}" alt="${p.name}" class="w-20 h-20 object-cover rounded-lg">
                     <div class="flex-1">
                         <span class="text-xs bg-pink-100 text-pink-600 px-2 py-1 rounded font-bold">${p.category}</span>
                         <h3 class="font-bold text-gray-800 mt-1">${p.name}</h3>
                         <p class="text-pink-600 font-bold mt-1">${p.price} ج.م</p>
-                        <button onclick="addToCart(${p.id})" class="mt-2 bg-pink-600 text-white px-4 py-1.5 rounded-lg text-sm font-bold hover:bg-pink-700 transition">إضافة للسلة +</button>
+                        <button onclick="addToCart(${p.id})" class="mt-2 bg-pink-600 text-white px-4 py.5 rounded-lg text-sm font-bold hover:bg-pink-700 transition">إضافة للسلة +</button>
                     </div>
                 </div>
             `).join('');
+
+            if (container.innerHTML !== currentHTML) {
+                container.innerHTML = currentHTML;
+            }
         }
 
         function addToCart(productId) {
@@ -151,7 +158,7 @@
 
         function submitOrder() {
             const name = document.getElementById('custName').value.trim();
-            const phone = document.getElementById('custPhone.value')?.trim() || document.getElementById('custPhone').value.trim();
+            const phone = document.getElementById('custPhone').value.trim();
             const address = document.getElementById('custAddress').value.trim();
 
             if (!name || !phone || !address) {
@@ -177,6 +184,7 @@
 
             cart = [];
             document.getElementById('custName').value = '';
+            document.getElementById('custPhone.value') ? document.getElementById('custPhone.value').value = '' : '';
             document.getElementById('custPhone').value = '';
             document.getElementById('custAddress').value = '';
             renderCart();
