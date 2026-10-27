@@ -5,192 +5,231 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>TH Cosmetics - متجر التجميل</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Cairo', sans-serif; }
     </style>
 </head>
 <body class="bg-pink-50 text-gray-800">
-    <div id="root"></div>
 
-    <script type="text/babel">
-        function App() {
-            const [isAdmin, setIsAdmin] = React.useState(false);
-            const [orders, setOrders] = React.useState([]);
-            const [products, setProducts] = React.useState([
-                { id: 1, name: 'سيروم أنوا بيتش (Anua Peach 70)', price: 450, category: 'العناية بالبشرة', image: 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=300&q=80' },
-                { id: 2, name: 'كولاجين البرتقال الطبيعي', price: 350, category: 'العناية بالشعر', image: 'https://images.unsplash.com/photo-1608248597359-9945c57b7852?auto=format&fit=crop&w=300&q=80' }
-            ]);
-            const [cart, setCart] = React.useState([]);
-            const [customerName, setCustomerName] = React.useState('');
-            const [customerPhone, setCustomerPhone] = React.useState('');
-            const [customerAddress, setCustomerAddress] = React.useState('');
-            const [orderSuccess, setOrderSuccess] = React.useState(false);
+    <!-- Header -->
+    <header class="bg-white shadow-md p-4 flex justify-between items-center sticky top-0 z-50">
+        <h1 class="text-xl font-bold text-pink-600">TH Cosmetics 💄</h1>
+        <div id="authBtnContainer">
+            <button onclick="toggleAdminView()" class="bg-pink-600 text-white px-4 py-2 rounded-lg text-sm font-bold">دخول الأدمن 🔐</button>
+        </div>
+    </header>
 
-            // استرجاع الطلبات المخزنة عند فتح الموقع
-            React.useEffect(() => {
-                const saved = localStorage.getItem('th_orders');
-                if (saved) {
-                    try {
-                        setOrders(JSON.parse(saved));
-                    } catch(e) {}
-                }
-            }, []);
+    <main class="max-w-4xl mx-auto p-4">
+        <!-- رسالة نجاح الطلب -->
+        <div id="successAlert" class="hidden bg-green-500 text-white p-4 rounded-xl text-center font-bold mb-6 shadow-lg">
+            🎉 تم إرسال طلبك بنجاح! سيتم التواصل معك قريباً لتأكيد الشحن.
+        </div>
 
-            const addToCart = (product) => {
-                setCart([...cart, product]);
-            };
+        <!-- واجهة المتجر للعملاء -->
+        <div id="customerStoreView">
+            <h2 class="text-2xl font-bold text-gray-700 mb-4">منتجات التجميل والعناية</h2>
+            
+            <!-- قائمة المنتجات -->
+            <div id="productsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8"></div>
 
-            const removeFromCart = (index) => {
-                const newCart = [...cart];
-                newCart.splice(index, 1);
-                setCart(newCart);
-            };
-
-            const handleCheckout = () => {
-                if (!customerName || !customerPhone || !customerAddress) {
-                    alert('الرجاء إدخال الاسم ورقم الهاتف والعنوان كاملة!');
-                    return;
-                }
-
-                if (cart.length === 0) {
-                    alert('السلة فارغة!');
-                    return;
-                }
-
-                const newOrder = {
-                    id: Date.now(),
-                    date: new Date().toLocaleString('ar-EG'),
-                    name: customerName,
-                    phone: customerPhone,
-                    address: customerAddress,
-                    items: [...cart],
-                    total: cart.reduce((sum, item) => sum + item.price, 0)
-                };
-
-                const updatedOrders = [newOrder, ...orders];
-                setOrders(updatedOrders);
-                localStorage.setItem('th_orders', JSON.stringify(updatedOrders));
-
-                // إعادة ضبط الحقول
-                setCart([]);
-                setCustomerName('');
-                setCustomerPhone('');
-                setCustomerAddress('');
-                setOrderSuccess(true);
-                setTimeout(() => setOrderSuccess(false), 6000);
-            };
-
-            return (
-                <div className="min-h-screen flex flex-col">
-                    {/* شريط العنوان */}
-                    <header className="bg-white shadow-md p-4 flex justify-between items-center">
-                        <h1 className="text-xl font-bold text-pink-600">TH Cosmetics 💄</h1>
-                        <div>
-                            {isAdmin ? (
-                                <button onClick={() => setIsAdmin(false)} className="bg-red-500 text-white px-4 py-2 rounded-lg text-sm font-bold">خروج من لوحة الأدمن</button>
-                            ) : (
-                                <button onClick={() => {
-                                    const p = prompt('أدخل كلمة سر الأدمن:');
-                                    if(p === 'admin123') setIsAdmin(true);
-                                    else if(p !== null) alert('كلمة السر خطأ');
-                                }} className="bg-pink-600 text-white px-4 py-2 rounded-lg text-sm font-bold">دخول الأدمن 🔐</button>
-                            )}
-                        </div>
-                    </header>
-
-                    {/* المحتوى */}
-                    <main className="flex-1 p-4 max-w-5xl mx-auto w-full">
-                        {isAdmin ? (
-                            <div>
-                                <h2 className="text-2xl font-bold mb-4 text-gray-700">لوحة تحكم الأدمن - الطلبات الواردة ({orders.length})</h2>
-                                {orders.length === 0 ? (
-                                    <p className="text-gray-500 bg-white p-6 rounded-xl shadow">لا توجد طلبات حتى الآن.</p>
-                                ) : (
-                                    <div className="space-y-4">
-                                        {orders.map(o => (
-                                            <div key={o.id} className="bg-white p-4 rounded-xl shadow border-r-4 border-pink-500">
-                                                <div className="flex justify-between font-bold text-pink-600 mb-2">
-                                                    <span>طلب رقم: #{o.id.toString().slice(-4)}</span>
-                                                    <span>{o.date}</span>
-                                                </div>
-                                                <p><strong>الاسم:</strong> {o.name}</p>
-                                                <p><strong>الهاتف:</strong> {o.phone}</p>
-                                                <p><strong>العنوان:</strong> {o.address}</p>
-                                                <div className="mt-2 bg-gray-50 p-2 rounded">
-                                                    <strong>المنتجات:</strong>
-                                                    <ul className="list-disc list-inside text-sm">
-                                                        {o.items.map((it, i) => (
-                                                            <li key={i}>{it.name} - {it.price} ج.م</li>
-                                                        ))}
-                                                    </ul>
-                                                </div>
-                                                <p className="mt-2 font-bold text-green-600">الإجمالي: {o.total} ج.م</p>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                        ) : (
-                            <div>
-                                {orderSuccess && (
-                                    <div className="bg-green-100 border border-green-400 text-green-700 p-4 rounded mb-4 text-center font-bold">
-                                        🎉 تم إرسال طلبك بنجاح! سيتم التواصل معك قريباً لتأكيد الشحن.
-                                    </div>
-                                )}
-
-                                <h2 className="text-2xl font-bold mb-4 text-gray-700">منتجات التجميل والعناية</h2>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-                                    {products.map(prod => (
-                                        <div key={prod.id} className="bg-white p-4 rounded-xl shadow flex gap-4 items-center">
-                                            <img src={prod.image} alt={prod.name} className="w-20 h-20 object-cover rounded-lg" />
-                                            <div className="flex-1">
-                                                <span className="text-xs bg-pink-100 text-pink-600 px-2 py-1 rounded">{prod.category}</span>
-                                                <h3 className="font-bold mt-1">{prod.name}</h3>
-                                                <p className="text-pink-600 font-bold">{prod.price} ج.م</p>
-                                                <button onClick={() => addToCart(prod)} className="mt-2 bg-pink-600 text-white px-3 py-1 rounded text-sm font-bold">إضافة للسلة</button>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-
-                                {/* سلة الشراء */}
-                                <div className="bg-white p-6 rounded-xl shadow">
-                                    <h3 className="text-xl font-bold mb-4">سلة المشتريات ({cart.length})</h3>
-                                    {cart.length === 0 ? (
-                                        <p className="text-gray-500">السلة فارغة، قم بإضافة منتجات.</p>
-                                    ) : (
-                                        <div>
-                                            <ul className="divide-y mb-4">
-                                                {cart.map((item, index) => (
-                                                    <li key={index} className="py-2 flex justify-between items-center">
-                                                        <span>{item.name} - <strong>{item.price} ج.م</strong></span>
-                                                        <button onClick={() => removeFromCart(index)} className="text-red-500 text-sm">حذف</button>
-                                                    </li>
-                                                ))}
-                                            </ul>
-
-                                            <div className="space-y-3 border-t pt-4">
-                                                <h4 className="font-bold text-gray-700">بيانات الشحن لإتمام الطلب:</h4>
-                                                <input type="text" placeholder="الاسم بالكامل" value={customerName} onChange={e => setCustomerName(e.target.value)} className="w-full p-2 border rounded" />
-                                                <input type="tel" placeholder="رقم الهاتف" value={customerPhone} onChange={e => setCustomerPhone(e.target.value)} className="w-full p-2 border rounded" />
-                                                <input type="text" placeholder="العنوان بالتفصيل" value={customerAddress} onChange={e => setCustomerAddress(e.target.value)} className="w-full p-2 border rounded" />
-                                                <button onClick={handleCheckout} className="w-full bg-green-600 text-white py-3 rounded-lg font-bold text-lg hover:bg-green-700 transition">تأكيد إرسال الطلب ✓</button>
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        )}
-                    </main>
+            <!-- سلة المشتريات -->
+            <div class="bg-white p-6 rounded-xl shadow-lg border border-pink-100">
+                <h3 class="text-xl font-bold mb-4 text-gray-800 flex justify-between items-center">
+                    <span>سلة المشتريات 🛒</span>
+                    <span id="cartCountBadge" class="bg-pink-100 text-pink-600 text-sm px-3 py-1 rounded-full">0 منتجات</span>
+                </h3>
+                
+                <div id="cartItemsList" class="divide-y mb-4">
+                    <p class="text-gray-400 py-2">السلة فارغة حالياً. قم بإضافة منتجات من الأعلى.</p>
                 </div>
-            );
+
+                <div id="checkoutForm" class="space-y-3 border-t pt-4 hidden">
+                    <h4 class="font-bold text-gray-700">بيانات الشحن لإتمام الطلب:</h4>
+                    <input type="text" id="custName" placeholder="الاسم بالكامل" class="w-full p-3 border rounded-lg focus:outline-pink-500">
+                    <input type="tel" id="custPhone" placeholder="رقم الهاتف" class="w-full p-3 border rounded-lg focus:outline-pink-500">
+                    <input type="text" id="custAddress" placeholder="العنوان بالتفصيل" class="w-full p-3 border rounded-lg focus:outline-pink-500">
+                    <button type="button" onclick="submitOrder()" class="w-full bg-green-600 text-white py-3 rounded-lg font-bold text-lg hover:bg-green-700 transition shadow-md">تأكيد إرسال الطلب ✓</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- واجهة الأدمن -->
+        <div id="adminDashboardView" class="hidden">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800">لوحة تحكم الأدمن 📋 (الطلبات محفوظة دائماً)</h2>
+            </div>
+            <div id="adminOrdersList" class="space-y-4"></div>
+        </div>
+    </main>
+
+    <script>
+        const defaultProducts = [
+            { id: 1, name: 'سيروم أنوا بيتش (Anua Peach 70)', price: 450, category: 'العناية بالبشرة', image: 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=300&q=80' },
+            { id: 2, name: 'كولاجين البرتقال الطبيعي', price: 350, category: 'العناية بالشعر', image: 'https://images.unsplash.com/photo-1608248597359-9945c57b7852?auto=format&fit=crop&w=300&q=80' }
+        ];
+
+        let cart = [];
+        let isAdminLoggedIn = false;
+
+        window.onload = function() {
+            renderProducts();
+            renderCart();
+        };
+
+        function renderProducts() {
+            const container = document.getElementById('productsGrid');
+            container.innerHTML = defaultProducts.map(p => `
+                <div class="bg-white p-4 rounded-xl shadow flex gap-4 items-center border border-gray-100">
+                    <img src="${p.image}" alt="${p.name}" class="w-20 h-20 object-cover rounded-lg">
+                    <div class="flex-1">
+                        <span class="text-xs bg-pink-100 text-pink-600 px-2 py-1 rounded font-bold">${p.category}</span>
+                        <h3 class="font-bold text-gray-800 mt-1">${p.name}</h3>
+                        <p class="text-pink-600 font-bold mt-1">${p.price} ج.م</p>
+                        <button onclick="addToCart(${p.id})" class="mt-2 bg-pink-600 text-white px-4 py-1.5 rounded-lg text-sm font-bold hover:bg-pink-700 transition">إضافة للسلة +</button>
+                    </div>
+                </div>
+            `).join('');
         }
 
-        ReactDOM.render(<App />, document.getElementById('root'));
+        function addToCart(productId) {
+            const product = defaultProducts.find(p => p.id === productId);
+            if (product) {
+                cart.push(product);
+                renderCart();
+            }
+        }
+
+        function removeFromCart(index) {
+            cart.splice(index, 1);
+            renderCart();
+        }
+
+        function renderCart() {
+            const list = document.getElementById('cartItemsList');
+            const form = document.getElementById('checkoutForm');
+            const badge = document.getElementById('cartCountBadge');
+            
+            badge.innerText = `${cart.length} منتجات`;
+
+            if (cart.length === 0) {
+                list.innerHTML = `<p class="text-gray-400 py-2">السلة فارغة حالياً. قم بإضافة منتجات من الأعلى.</p>`;
+                form.classList.add('hidden');
+                return;
+            }
+
+            let total = 0;
+            list.innerHTML = cart.map((item, i) => {
+                total += item.price;
+                return `
+                    <div class="py-2 flex justify-between items-center">
+                        <span class="font-semibold text-gray-700">${item.name} - <strong class="text-pink-600">${item.price} ج.م</strong></span>
+                        <button onclick="removeFromCart(${i})" class="text-red-500 text-xs font-bold hover:underline">حذف</button>
+                    </div>
+                `;
+            }).join('') + `
+                <div class="py-3 font-bold text-lg text-gray-800 flex justify-between border-t mt-2">
+                    <span>الإجمالي:</span>
+                    <span class="text-green-600">${total} ج.م</span>
+                </div>
+            `;
+
+            form.classList.remove('hidden');
+        }
+
+        function submitOrder() {
+            const name = document.getElementById('custName').value.trim();
+            const phone = document.getElementById('custPhone').value.trim();
+            const address = document.getElementById('custAddress').value.trim();
+
+            if (!name || !phone || !address) {
+                alert('الرجاء كتابة الاسم ورقم الهاتف والعنوان كاملاً!');
+                return;
+            }
+
+            const total = cart.reduce((sum, item) => sum + item.price, 0);
+            const newOrder = {
+                id: Date.now(),
+                date: new Date().toLocaleString('ar-EG'),
+                name: name,
+                phone: phone,
+                address: address,
+                items: [...cart],
+                total: total
+            };
+
+            let existingOrders = JSON.parse(localStorage.getItem('th_orders') || '[]');
+            existingOrders.unshift(newOrder);
+            localStorage.setItem('th_orders', JSON.stringify(existingOrders));
+
+            cart = [];
+            document.getElementById('custName').value = '';
+            document.getElementById('custPhone').value = '';
+            document.getElementById('custAddress').value = '';
+            renderCart();
+
+            const alertBox = document.getElementById('successAlert');
+            alertBox.classList.remove('hidden');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            setTimeout(() => alertBox.classList.add('hidden'), 5000);
+        }
+
+        function toggleAdminView() {
+            const btnContainer = document.getElementById('authBtnContainer');
+            const storeView = document.getElementById('customerStoreView');
+            const adminView = document.getElementById('adminDashboardView');
+
+            if (!isAdminLoggedIn) {
+                const pass = prompt('أدخل كلمة سر الأدمن:');
+                if (pass === 'admin123') {
+                    isAdminLoggedIn = true;
+                    btnContainer.innerHTML = `<button onclick="toggleAdminView()" class="bg-red-500 text-white px-4 py-2 rounded-lg text-sm font-bold">خروج من الأدمن 🚪</button>`;
+                    storeView.classList.add('hidden');
+                    adminView.classList.remove('hidden');
+                    renderAdminOrders();
+                } else if (pass !== null) {
+                    alert('كلمة السر خاطئة!');
+                }
+            } else {
+                isAdminLoggedIn = false;
+                btnContainer.innerHTML = `<button onclick="toggleAdminView()" class="bg-pink-600 text-white px-4 py-2 rounded-lg text-sm font-bold">دخول الأدمن 🔐</button>`;
+                storeView.classList.remove('hidden');
+                adminView.classList.add('hidden');
+            }
+        }
+
+        function renderAdminOrders() {
+            const container = document.getElementById('adminOrdersList');
+            const orders = JSON.parse(localStorage.getItem('th_orders') || '[]');
+
+            if (orders.length === 0) {
+                container.innerHTML = `<div class="bg-white p-6 rounded-xl shadow text-center text-gray-400">لا توجد طلبات واردة حتى الآن.</div>`;
+                return;
+            }
+
+            container.innerHTML = orders.map(o => `
+                <div class="bg-white p-5 rounded-xl shadow border-r-4 border-pink-500">
+                    <div class="flex justify-between font-bold text-pink-600 mb-2">
+                        <span>طلب رقم: #${o.id.toString().slice(-4)}</span>
+                        <span class="text-xs text-gray-400">${o.date}</span>
+                    </div>
+                    <div class="text-sm space-y-1">
+                        <p><strong>الاسم:</strong> ${o.name}</p>
+                        <p><strong>الهاتف:</strong> ${o.phone}</p>
+                        <p><strong>العنوان:</strong> ${o.address}</p>
+                    </div>
+                    <div class="mt-3 bg-pink-50 p-3 rounded-lg">
+                        <strong class="text-xs text-pink-700">المنتجات المطلوبة:</strong>
+                        <ul class="list-disc list-inside text-sm mt-1">
+                            ${o.items.map(it => `<li>${it.name} - <strong>${it.price} ج.م</strong></li>`).join('')}
+                        </ul>
+                    </div>
+                    <div class="mt-3 font-bold text-green-600 text-right">
+                        الإجمالي: ${o.total} ج.م
+                    </div>
+                </div>
+            `).join('');
+        }
     </script>
 </body>
 </html>
