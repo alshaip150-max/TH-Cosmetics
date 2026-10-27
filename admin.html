@@ -7,151 +7,171 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
     <style>body { font-family: 'Cairo', sans-serif; }</style>
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 </head>
 <body class="bg-gray-100 text-gray-800">
 
     <header class="bg-white shadow-md p-4 flex justify-between items-center">
         <h1 class="text-xl font-bold text-pink-600">لوحة تحكم الأدمن 🔐</h1>
-        <a href="index.html" class="bg-gray-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-gray-700">الذهاب للمتجر 🛍️</a>
+        <a href="index.html" class="bg-gray-600 text-white px-4 py-2 rounded-lg text-sm font-bold">الذهاب للمتجر 🛍️</a>
     </header>
 
     <main class="max-w-4xl mx-auto p-4">
-        <!-- شاشة تسجيل الدخول -->
+        <!-- تسجيل الدخول -->
         <div id="loginScreen" class="bg-white p-8 rounded-xl shadow max-w-md mx-auto mt-12 text-center">
             <h2 class="text-2xl font-bold mb-4 text-gray-700">تسجيل دخول الأدمن</h2>
-            <p class="text-gray-500 mb-4 text-sm">أدخل كلمة المرور للوصول للوحة التحكم</p>
-            <input type="password" id="adminPass" placeholder="كلمة المرور (admin123)" class="w-full p-3 border rounded-lg mb-4 text-center focus:outline-pink-500">
-            <button onclick="checkLogin()" class="w-full bg-pink-600 text-white py-3 rounded-lg font-bold hover:bg-pink-700">دخول اللوحة</button>
+            <input type="password" id="adminPass" placeholder="كلمة المرور (admin123)" class="w-full p-3 border rounded-lg mb-4 text-center">
+            <button onclick="checkLogin()" class="w-full bg-pink-600 text-white py-3 rounded-lg font-bold">دخول اللوحة</button>
         </div>
 
-        <!-- محتوى لوحة التحكم -->
-        <div id="adminPanel" class="hidden">
+        <!-- لوحة التحكم -->
+        <div id="adminPanel" class="hidden space-y-6">
             <!-- تغيير اللوجو -->
-            <div class="bg-white p-6 rounded-xl shadow mb-6 border border-pink-200">
+            <div class="bg-white p-6 rounded-xl shadow border border-pink-200">
                 <h2 class="text-xl font-bold text-pink-600 mb-3">🖼️ تغيير شعار (لوجو) المتجر</h2>
                 <div class="space-y-3">
-                    <input type="text" id="storeLogoInput" placeholder="رابط صورة اللوجو المباشر (Direct Link)" class="w-full p-2 border rounded">
-                    <button onclick="updateStoreLogo()" class="w-full bg-pink-600 text-white py-2 rounded font-bold hover:bg-pink-700">تحديث اللوجو</button>
+                    <input type="text" id="storeLogoInput" placeholder="رابط صورة اللوجو المباشر" class="w-full p-2 border rounded">
+                    <button onclick="updateLogo()" class="w-full bg-pink-600 text-white py-2 rounded font-bold">حفظ اللوجو</button>
                 </div>
             </div>
 
             <!-- إضافة منتج -->
-            <div class="bg-white p-6 rounded-xl shadow mb-6 border border-pink-200">
-                <h2 class="text-xl font-bold text-pink-600 mb-4">➕ إضافة منتج جديد للمتجر</h2>
+            <div class="bg-white p-6 rounded-xl shadow border border-pink-200">
+                <h2 class="text-xl font-bold text-pink-600 mb-4">➕ إضافة منتج جديد</h2>
                 <div class="space-y-3">
-                    <input type="text" id="newProdName" placeholder="اسم المنتج" class="w-full p-2 border rounded">
-                    <input type="number" id="newProdPrice" placeholder="السعر (ج.م)" class="w-full p-2 border rounded">
-                    <input type="text" id="newProdCategory" placeholder="القسم (مثال: العناية بالبشرة)" class="w-full p-2 border rounded">
-                    <textarea id="newProdDesc" placeholder="وصف المنتج التفصيلي" class="w-full p-2 border rounded" rows="2"></textarea>
-                    <input type="text" id="newProdImage" placeholder="رابط صورة المنتج المباشر (Direct Link)" class="w-full p-2 border rounded">
-                    <button onclick="addNewProduct()" class="w-full bg-pink-600 text-white py-2 rounded font-bold hover:bg-pink-700">حفظ ونشر المنتج في المتجر</button>
+                    <input type="text" id="pName" placeholder="اسم المنتج" class="w-full p-2 border rounded">
+                    <input type="number" id="pPrice" placeholder="السعر (ج.م)" class="w-full p-2 border rounded">
+                    <input type="text" id="pCategory" placeholder="القسم" class="w-full p-2 border rounded">
+                    <textarea id="pDesc" placeholder="الوصف" class="w-full p-2 border rounded" rows="2"></textarea>
+                    <input type="text" id="pImage" placeholder="رابط الصورة المباشر" class="w-full p-2 border rounded">
+                    <button onclick="addProduct()" class="w-full bg-pink-600 text-white py-2 rounded font-bold">نشر المنتج السحابي</button>
                 </div>
             </div>
 
-            <!-- إدارة المنتجات (حذف) -->
-            <div class="bg-white p-6 rounded-xl shadow mb-6 border border-gray-200">
-                <h2 class="text-xl font-bold text-gray-800 mb-4">📦 إدارة المنتجات الحالية (حذف)</h2>
-                <div id="adminProductsList" class="space-y-3"></div>
+            <!-- قائمة المنتجات (حذف) -->
+            <div class="bg-white p-6 rounded-xl shadow">
+                <h2 class="text-xl font-bold mb-4">📦 إدارة المنتجات</h2>
+                <div id="adminProductsGrid" class="space-y-3"></div>
+            </div>
+
+            <!-- قائمة الطلبات الحية -->
+            <div class="bg-white p-6 rounded-xl shadow">
+                <h2 class="text-xl font-bold mb-4">📋 الطلبات الواردة (تحديث فوري)</h2>
+                <div id="adminOrdersGrid" class="space-y-4"></div>
             </div>
         </div>
     </main>
 
     <script>
+        // تم دمج مفاتيح مشروعك الخاصة بدقة
+        const firebaseConfig = {
+            apiKey: "AIzaSyA4rEfOdwXPEoEUQohP77fP-OoaVeJCVbc",
+            authDomain: "th-cosmetics-67a00.firebaseapp.com",
+            projectId: "th-cosmetics-67a00",
+            storageBucket: "th-cosmetics-67a00.appspot.com",
+            messagingSenderId: "966089361513",
+            appId: "1:966089361513:web:6de13125cb7a0e4543faf8",
+            measurementId: "G-SGJQYX78NK"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
         function checkLogin() {
-            const pass = document.getElementById('adminPass').value;
-            if (pass === 'admin123') {
-                document.getElementById('loginScreen').classList.add('hidden');
-                document.getElementById('adminPanel').classList.remove('hidden');
-                
-                const currentLogo = localStorage.getItem('th_logo');
-                if (currentLogo) document.getElementById('storeLogoInput').value = currentLogo;
-
-                renderAdminProducts();
+            if (document.getElementById("adminPass").value === "admin123") {
+                document.getElementById("loginScreen").classList.add("hidden");
+                document.getElementById("adminPanel").classList.remove("hidden");
+                listenToAdminData();
             } else {
-                alert('كلمة المرور غير صحيحة!');
+                alert("كلمة المرور خاطئة!");
             }
         }
 
-        function updateStoreLogo() {
-            const logoUrl = document.getElementById('storeLogoInput').value.trim();
-            if (!logoUrl) { alert('الرجاء إدخال رابط صحيح للصورة!'); return; }
-            localStorage.setItem('th_logo', logoUrl);
-            alert('تم تحديث شعار المتجر بنجاح!');
-        }
-
-        function getStoredProducts() {
-            let defaultProducts = [
-                { id: 1, name: 'سيروم أنوا بيتش (Anua Peach 70)', price: 450, category: 'العناية بالبشرة', description: 'سيروم كوري غني بمستخلص الخوخ والنياسيناميد لتصفية البشرة.', image: 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=300&q=80' },
-                { id: 2, name: 'كولاجين البرتقال الطبيعي', price: 350, category: 'العناية بالشعر', description: 'مشروب ومكمل كولاجين طبيعي بنكهة البرتقال لتقوية الشعر.', image: 'https://images.unsplash.com/photo-1608248597359-9945c57b7852?auto=format&fit=crop&w=300&q=80' },
-                { id: 3, name: 'مرطب الشفاه الكوري', price: 200, category: 'المكياج', description: 'مرطب شفاه مغذي ومرطب بعمق يدوم طويلاً.', image: 'https://images.unsplash.com/photo-1586495777744-4413f21062fa?auto=format&fit=crop&w=300&q=80' }
-            ];
-            const saved = localStorage.getItem('th_products');
-            if (saved) {
-                try {
-                    const parsed = JSON.parse(saved);
-                    if (Array.isArray(parsed)) return parsed;
-                } catch(e) {}
-            }
-            return defaultProducts;
-        }
-
-        function addNewProduct() {
-            const name = document.getElementById('newProdName').value.trim();
-            const price = parseFloat(document.getElementById('newProdPrice').value);
-            const category = document.getElementById('newProdCategory').value.trim();
-            const description = document.getElementById('newProdDesc').value.trim();
-            const image = document.getElementById('newProdImage').value.trim();
-
-            if (!name || isNaN(price) || !category || !image) {
-                alert('الرجاء إدخال البيانات الأساسية للمنتج!');
-                return;
-            }
-
-            let products = getStoredProducts();
-            const newProd = { id: Date.now(), name, price, category, description, image };
-            products.unshift(newProd);
-            localStorage.setItem('th_products', JSON.stringify(products));
-
-            document.getElementById('newProdName').value = '';
-            document.getElementById('newProdPrice').value = '';
-            document.getElementById('newProdCategory').value = '';
-            document.getElementById('newProdDesc').value = '';
-            document.getElementById('newProdImage').value = '';
-
-            renderAdminProducts();
-            alert('تم إضافة المنتج بنجاح في المتجر!');
-        }
-
-        function deleteProduct(productId) {
-            if (confirm('هل أنت متأكد من حذف هذا المنتج؟')) {
-                let products = getStoredProducts();
-                products = products.filter(p => p.id !== productId);
-                localStorage.setItem('th_products', JSON.stringify(products));
-                renderAdminProducts();
-            }
-        }
-
-        function renderAdminProducts() {
-            const container = document.getElementById('adminProductsList');
-            const products = getStoredProducts();
-
-            if (products.length === 0) {
-                container.innerHTML = `<p class="text-gray-400 text-sm">لا توجد منتجات حالياً.</p>`;
-                return;
-            }
-
-            container.innerHTML = products.map(p => `
-                <div class="flex justify-between items-center bg-gray-50 p-3 rounded-lg border">
-                    <div class="flex items-center gap-3">
-                        <img src="${p.image}" alt="${p.name}" class="w-12 h-12 object-cover rounded">
-                        <div>
-                            <h4 class="font-bold text-sm">${p.name}</h4>
-                            <span class="text-xs text-pink-600">${p.price} ج.م - ${p.category}</span>
+        function listenToAdminData() {
+            db.collection("products").onSnapshot(snapshot => {
+                const container = document.getElementById("adminProductsGrid");
+                container.innerHTML = snapshot.docs.map(doc => {
+                    const p = doc.data();
+                    return `
+                        <div class="flex justify-between items-center border p-3 rounded">
+                            <div class="flex items-center gap-3">
+                                <img src="${p.image}" class="w-10 h-10 object-cover rounded">
+                                <div><h4 class="font-bold text-sm">${p.name}</h4><span class="text-xs text-pink-600">${p.price} ج.م</span></div>
+                            </div>
+                            <button onclick="deleteProduct('${doc.id}')" class="bg-red-500 text-white px-3 py-1 rounded text-xs font-bold">حذف 🗑️</button>
                         </div>
-                    </div>
-                    <button onclick="deleteProduct(${p.id})" class="bg-red-500 text-white px-3 py-1.5 rounded text-xs font-bold hover:bg-red-600">حذف 🗑️</button>
-                </div>
-            `).join('');
+                    `;
+                }).join('');
+            });
+
+            db.collection("orders").orderBy("createdAt", "desc").onSnapshot(snapshot => {
+                const container = document.getElementById("adminOrdersGrid");
+                if (snapshot.empty) {
+                    container.innerHTML = `<p class="text-gray-400">لا توجد طلبات جديدة.</p>`;
+                    return;
+                }
+                container.innerHTML = snapshot.docs.map(doc => {
+                    const o = doc.data();
+                    return `
+                        <div class="border-r-4 border-pink-500 bg-pink-50 p-4 rounded shadow-sm space-y-2">
+                            <div class="flex justify-between font-bold text-pink-600">
+                                <span>طلب رقم: #${doc.id.slice(-5)}</span>
+                                <span class="bg-yellow-200 text-yellow-800 text-xs px-2 py-1 rounded">${o.status}</span>
+                            </div>
+                            <div class="text-sm">
+                                <p><strong>الاسم:</strong> ${o.name} | <strong>الهاتف:</strong> ${o.phone}</p>
+                                <p><strong>العنوان:</strong> ${o.address}</p>
+                            </div>
+                            <div class="bg-white p-2 rounded border text-xs">
+                                <strong>المنتجات:</strong>
+                                <ul>${o.items ? o.items.map(it => `<li>${it.name} (${it.quantity} قطعة) - ${it.price * it.quantity} ج.م</li>`).join('') : ''}</ul>
+                            </div>
+                            <div class="flex justify-between items-center text-sm font-bold border-t pt-2">
+                                <span>الإجمالي: ${o.total} ج.م</span>
+                                <button onclick="updateStatus('${doc.id}', 'تم الاستلام')" class="bg-green-600 text-white px-2 py-1 rounded text-xs">تم الاستلام ✓</button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            });
+        }
+
+        async function updateLogo() {
+            const url = document.getElementById("storeLogoInput").value.trim();
+            if (url) {
+                await db.collection("settings").doc("logo").set({ url });
+                alert("تم تحديث اللوجو بنجاح!");
+            }
+        }
+
+        async function addProduct() {
+            const name = document.getElementById("pName").value.trim();
+            const price = parseFloat(document.getElementById("pPrice").value);
+            const category = document.getElementById("pCategory").value.trim();
+            const description = document.getElementById("pDesc").value.trim();
+            const image = document.getElementById("pImage").value.trim();
+
+            if (!name || isNaN(price) || !image) {
+                alert("يرجى إدخال البيانات الأساسية للمنتج!");
+                return;
+            }
+
+            await db.collection("products").add({ name, price, category, description, image, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+            document.getElementById("pName").value = "";
+            document.getElementById("pPrice").value = "";
+            document.getElementById("pImage").value = "";
+            alert("تم إضافة ونشر المنتج بنجاح!");
+        }
+
+        async function deleteProduct(id) {
+            if (confirm("هل تريد حذف هذا المنتج من المتجر؟")) {
+                await db.collection("products").doc(id).delete();
+            }
+        }
+
+        async function updateStatus(id, newStatus) {
+            await db.collection("orders").doc(id).update({ status: newStatus });
         }
     </script>
 </body>
