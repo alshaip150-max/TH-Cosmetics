@@ -57,7 +57,7 @@
         <!-- واجهة الأدمن -->
         <div id="adminDashboardView" class="hidden">
             <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-bold text-gray-800">لوحة تحكم الأدمن 📋 (الطلبات محفوظة دائماً)</h2>
+                <h2 class="text-2xl font-bold text-gray-800">لوحة تحكم الأدمن 📋 (إدارة الطلبات والحالات)</h2>
             </div>
             <div id="adminOrdersList" class="space-y-4"></div>
         </div>
@@ -155,7 +155,8 @@
                 phone: phone,
                 address: address,
                 items: [...cart],
-                total: total
+                total: total,
+                status: 'قيد الانتظار' // الحالة الافتتاحية للطلب
             };
 
             let existingOrders = JSON.parse(localStorage.getItem('th_orders') || '[]');
@@ -198,6 +199,19 @@
             }
         }
 
+        // تغيير حالة الطلب من لوحة الأدمن
+        function updateOrderStatus(orderId, newStatus) {
+            let orders = JSON.parse(localStorage.getItem('th_orders') || '[]');
+            orders = orders.map(o => {
+                if (o.id === orderId) {
+                    o.status = newStatus;
+                }
+                return o;
+            });
+            localStorage.setItem('th_orders', JSON.stringify(orders));
+            renderAdminOrders();
+        }
+
         function renderAdminOrders() {
             const container = document.getElementById('adminOrdersList');
             const orders = JSON.parse(localStorage.getItem('th_orders') || '[]');
@@ -207,28 +221,44 @@
                 return;
             }
 
-            container.innerHTML = orders.map(o => `
-                <div class="bg-white p-5 rounded-xl shadow border-r-4 border-pink-500">
-                    <div class="flex justify-between font-bold text-pink-600 mb-2">
-                        <span>طلب رقم: #${o.id.toString().slice(-4)}</span>
-                        <span class="text-xs text-gray-400">${o.date}</span>
+            container.innerHTML = orders.map(o => {
+                let statusColor = 'bg-yellow-100 text-yellow-800';
+                if(o.status === 'جاري التجهيز') statusColor = 'bg-blue-100 text-blue-800';
+                if(o.status === 'جاري التوصيل') statusColor = 'bg-purple-100 text-purple-800';
+                if(o.status === 'تم الاستلام') statusColor = 'bg-green-100 text-green-800';
+
+                return `
+                    <div class="bg-white p-5 rounded-xl shadow border-r-4 border-pink-500">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="font-bold text-pink-600">طلب رقم: #${o.id.toString().slice(-4)}</span>
+                            <span class="text-xs px-3 py-1 rounded-full font-bold ${statusColor}">${o.status || 'قيد الانتظار'}</span>
+                        </div>
+                        <div class="text-xs text-gray-400 mb-3">${o.date}</div>
+                        <div class="text-sm space-y-1">
+                            <p><strong>الاسم:</strong> ${o.name}</p>
+                            <p><strong>الهاتف:</strong> ${o.phone}</p>
+                            <p><strong>العنوان:</strong> ${o.address}</p>
+                        </div>
+                        <div class="mt-3 bg-pink-50 p-3 rounded-lg">
+                            <strong class="text-xs text-pink-700">المنتجات المطلوبة:</strong>
+                            <ul class="list-disc list-inside text-sm mt-1">
+                                ${o.items.map(it => `<li>${it.name} - <strong>${it.price} ج.م</strong></li>`).join('')}
+                            </ul>
+                        </div>
+                        <div class="mt-3 flex justify-between items-center border-t pt-3">
+                            <span class="font-bold text-green-600">الإجمالي: ${o.total} ج.م</span>
+                            
+                            <!-- أزرار تغيير حالة الطلب -->
+                            <div class="flex gap-1 flex-wrap">
+                                <button onclick="updateOrderStatus(${o.id}, 'قيد الانتظار')" class="px-2 py-1 text-xs bg-yellow-100 text-yellow-700 rounded hover:bg-yellow-200 font-bold">قيد الانتظار</button>
+                                <button onclick="updateOrderStatus(${o.id}, 'جاري التجهيز')" class="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200 font-bold">جاري التجهيز</button>
+                                <button onclick="updateOrderStatus(${o.id}, 'جاري التوصيل')" class="px-2 py-1 text-xs bg-purple-100 text-purple-700 rounded hover:bg-purple-200 font-bold">جاري التوصيل</button>
+                                <button onclick="updateOrderStatus(${o.id}, 'تم الاستلام')" class="px-2 py-1 text-xs bg-green-100 text-green-700 rounded hover:bg-green-200 font-bold">تم الاستلام ✓</button>
+                            </div>
+                        </div>
                     </div>
-                    <div class="text-sm space-y-1">
-                        <p><strong>الاسم:</strong> ${o.name}</p>
-                        <p><strong>الهاتف:</strong> ${o.phone}</p>
-                        <p><strong>العنوان:</strong> ${o.address}</p>
-                    </div>
-                    <div class="mt-3 bg-pink-50 p-3 rounded-lg">
-                        <strong class="text-xs text-pink-700">المنتجات المطلوبة:</strong>
-                        <ul class="list-disc list-inside text-sm mt-1">
-                            ${o.items.map(it => `<li>${it.name} - <strong>${it.price} ج.م</strong></li>`).join('')}
-                        </ul>
-                    </div>
-                    <div class="mt-3 font-bold text-green-600 text-right">
-                        الإجمالي: ${o.total} ج.م
-                    </div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
         }
     </script>
 </body>
