@@ -3,637 +3,194 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TH Cosmetics - متجر التجميل اللوكس</title>
-    <!-- Tailwind CSS -->
+    <title>TH Cosmetics - متجر التجميل</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- React & ReactDOM -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <!-- Babel JS -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <!-- Font Awesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Font Cairo -->
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Cairo', sans-serif; }
-        .pink-gradient { background: linear-gradient(135deg, #ec4899 0%, #db2777 50%, #be185d 100%); }
-        .glass-header { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); }
     </style>
 </head>
-<body class="bg-pink-50/50 text-gray-800 min-h-screen">
+<body class="bg-pink-50 text-gray-800">
     <div id="root"></div>
 
-    <!-- Firebase SDK Modules -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, getDocs, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        // إعدادات Firebase التلقائية للبيئة
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'th-cosmetics-app';
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
-            apiKey: "AIzaSyDemoKeyOnlyForAppFallback",
-            authDomain: "th-cosmetics.firebaseapp.com",
-            projectId: "th-cosmetics-demo",
-            storageBucket: "th-cosmetics.appspot.com",
-            messagingSenderId: "123456789",
-            appId: "1:123456789:web:abcdef"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-
-        window.firebaseDB = db;
-        window.firebaseAuth = auth;
-        window.firebaseAppId = appId;
-        window.fbCollection = collection;
-        window.fbAddDoc = addDoc;
-        window.fbOnSnapshot = onSnapshot;
-        window.fbDoc = doc;
-        window.fbUpdateDoc = updateDoc;
-        window.fbDeleteDoc = deleteDoc;
-        window.fbGetDocs = getDocs;
-        window.fbSetDoc = setDoc;
-        window.fbSignInAnonymously = signInAnonymously;
-    </script>
-
     <script type="text/babel">
-        const { useState, useEffect } = React;
+        function App() {
+            const [isAdmin, setIsAdmin] = React.useState(false);
+            const [orders, setOrders] = React.useState([]);
+            const [products, setProducts] = React.useState([
+                { id: 1, name: 'سيروم أنوا بيتش (Anua Peach 70)', price: 450, category: 'العناية بالبشرة', image: 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=300&q=80' },
+                { id: 2, name: 'كولاجين البرتقال الطبيعي', price: 350, category: 'العناية بالشعر', image: 'https://images.unsplash.com/photo-1608248597359-9945c57b7852?auto=format&fit=crop&w=300&q=80' }
+            ]);
+            const [cart, setCart] = React.useState([]);
+            const [customerName, setCustomerName] = React.useState('');
+            const [customerPhone, setCustomerPhone] = React.useState('');
+            const [customerAddress, setCustomerAddress] = React.useState('');
+            const [orderSuccess, setOrderSuccess] = React.useState(false);
 
-        // منتجات افتراضية رئيسية
-        const INITIAL_PRODUCTS = [
-            {
-                id: 'p1',
-                name: 'سيروم أنوا بيتش 70 نيا سيناميد (Anua Peach 70 Niacin)',
-                price: 450,
-                category: 'العناية بالبشرة',
-                image: 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=500&q=80'
-            },
-            {
-                id: 'p2',
-                name: 'كولاجين البرتقال الطبيعي المغذي',
-                price: 350,
-                category: 'العناية بالشعر',
-                image: 'https://images.unsplash.com/photo-1608248597359-9945c57b7852?auto=format&fit=crop&w=500&q=80'
-            },
-            {
-                id: 'p3',
-                name: 'سيروم الهيالورونيك أسيد المرطب',
-                price: 380,
-                category: 'العناية بالبشرة',
-                image: 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?auto=format&fit=crop&w=500&q=80'
-            },
-            {
-                id: 'p4',
-                name: 'مقشر الأحماض اللطيف للبشرة',
-                price: 290,
-                category: 'العناية بالبشرة',
-                image: 'https://images.unsplash.com/photo-1556228720-195a672e8a03?auto=format&fit=crop&w=500&q=80'
-            },
-            {
-                id: 'p5',
-                name: 'روج مات مخملي ثابت 24 ساعة',
-                price: 180,
-                category: 'المكياج',
-                image: 'https://images.unsplash.com/photo-1586495777744-4413f21062fa?auto=format&fit=crop&w=500&q=80'
-            }
-        ];
-
-        function MainApp() {
-            const [isAdmin, setIsAdmin] = useState(false);
-            const [selectedCategory, setSelectedCategory] = useState('الكل');
-            const [products, setProducts] = useState(INITIAL_PRODUCTS);
-            const [orders, setOrders] = useState([]);
-            const [cart, setCart] = useState([]);
-            const [isCartOpen, setIsCartOpen] = useState(false);
-            const [customerInfo, setCustomerInfo] = useState({ name: '', phone: '', address: '' });
-            const [orderSuccessMsg, setOrderSuccessMsg] = useState(false);
-            const [loading, setLoading] = useState(true);
-
-            // نموذج إضافة منتج جديد
-            const [newProduct, setNewProduct] = useState({ name: '', price: '', category: 'العناية بالبشرة', image: '' });
-
-            useEffect(() => {
-                // تفعيل الاتصال والتزامن مع السحابة
-                const initSync = async () => {
-                    if (window.firebaseAuth && window.firebaseDB) {
-                        try {
-                            await window.fbSignInAnonymously(window.firebaseAuth);
-                            const appId = window.firebaseAppId;
-                            const db = window.firebaseDB;
-
-                            // مسارات مجموعات البيانات العامة
-                            const productsCol = window.fbCollection(db, 'artifacts', appId, 'public', 'data', 'products');
-                            const ordersCol = window.fbCollection(db, 'artifacts', appId, 'public', 'data', 'orders');
-
-                            // الاستماع للتغييرات في المنتجات
-                            window.fbOnSnapshot(productsCol, (snapshot) => {
-                                if (!snapshot.empty) {
-                                    const prodList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                                    setProducts(prodList);
-                                } else {
-                                    // إذا كانت الداتابيز فارغة لأول مرة يتم إدخال المنتجات الأساسية
-                                    INITIAL_PRODUCTS.forEach(async (p) => {
-                                        await window.fbSetDoc(window.fbDoc(productsCol, p.id), p);
-                                    });
-                                }
-                            }, (err) => console.log('Products Snapshot fallback:', err));
-
-                            // الاستماع للأوردرات الواردة لحظياً
-                            window.fbOnSnapshot(ordersCol, (snapshot) => {
-                                const orderList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                                // ترتيب الطلبات بالأحدث أولاً
-                                orderList.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-                                setOrders(orderList);
-                                setLoading(false);
-                            }, (err) => console.log('Orders Snapshot fallback:', err));
-
-                        } catch (e) {
-                            console.log("Firebase initialized fallback to local state.");
-                            setLoading(false);
-                        }
-                    } else {
-                        setLoading(false);
-                    }
-                };
-
-                initSync();
+            // استرجاع الطلبات المخزنة عند فتح الموقع
+            React.useEffect(() => {
+                const saved = localStorage.getItem('th_orders');
+                if (saved) {
+                    try {
+                        setOrders(JSON.parse(saved));
+                    } catch(e) {}
+                }
             }, []);
 
-            // إضافة منتج للسلة
             const addToCart = (product) => {
-                const existing = cart.find(item => item.id === product.id);
-                if (existing) {
-                    setCart(cart.map(item => item.id === product.id ? { ...item, qty: item.qty + 1 } : item));
-                } else {
-                    setCart([...cart, { ...product, qty: 1 }]);
+                setCart([...cart, product]);
+            };
+
+            const removeFromCart = (index) => {
+                const newCart = [...cart];
+                newCart.splice(index, 1);
+                setCart(newCart);
+            };
+
+            const handleCheckout = () => {
+                if (!customerName || !customerPhone || !customerAddress) {
+                    alert('الرجاء إدخال الاسم ورقم الهاتف والعنوان كاملة!');
+                    return;
                 }
-                setIsCartOpen(true);
-            };
 
-            // تعديل الكمية بالسلة
-            const updateQty = (id, delta) => {
-                setCart(cart.map(item => {
-                    if (item.id === id) {
-                        const newQty = item.qty + delta;
-                        return newQty > 0 ? { ...item, qty: newQty } : null;
-                    }
-                    return item;
-                }).filter(Boolean));
-            };
+                if (cart.length === 0) {
+                    alert('السلة فارغة!');
+                    return;
+                }
 
-            // إرسال الطلب وحفظه دائمياً
-            const handleOrderSubmit = async (e) => {
-                e.preventDefault();
-                if (cart.length === 0) return;
-
-                const totalAmount = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
-                const orderData = {
-                    customer: customerInfo,
-                    items: cart,
-                    total: totalAmount,
-                    status: 'قيد الانتظار',
+                const newOrder = {
+                    id: Date.now(),
                     date: new Date().toLocaleString('ar-EG'),
-                    createdAt: Date.now()
+                    name: customerName,
+                    phone: customerPhone,
+                    address: customerAddress,
+                    items: [...cart],
+                    total: cart.reduce((sum, item) => sum + item.price, 0)
                 };
 
-                try {
-                    if (window.firebaseDB) {
-                        const ordersCol = window.fbCollection(window.firebaseDB, 'artifacts', window.firebaseAppId, 'public', 'data', 'orders');
-                        await window.fbAddDoc(ordersCol, orderData);
-                    } else {
-                        setOrders([ { id: Date.now().toString(), ...orderData }, ...orders]);
-                    }
-                } catch (err) {
-                    setOrders([ { id: Date.now().toString(), ...orderData }, ...orders]);
-                }
+                const updatedOrders = [newOrder, ...orders];
+                setOrders(updatedOrders);
+                localStorage.setItem('th_orders', JSON.stringify(updatedOrders));
 
+                // إعادة ضبط الحقول
                 setCart([]);
-                setCustomerInfo({ name: '', phone: '', address: '' });
-                setIsCartOpen(false);
-                setOrderSuccessMsg(true);
-                setTimeout(() => setOrderSuccessMsg(false), 6000);
+                setCustomerName('');
+                setCustomerPhone('');
+                setCustomerAddress('');
+                setOrderSuccess(true);
+                setTimeout(() => setOrderSuccess(false), 6000);
             };
-
-            // تغيير حالة الأوردر (للأدمن)
-            const handleStatusChange = async (orderId, newStatus) => {
-                try {
-                    if (window.firebaseDB) {
-                        const orderRef = window.fbDoc(window.firebaseDB, 'artifacts', window.firebaseAppId, 'public', 'data', 'orders', orderId);
-                        await window.fbUpdateDoc(orderRef, { status: newStatus });
-                    }
-                } catch(e) {
-                    setOrders(orders.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
-                }
-            };
-
-            // حذف أوردر (للأدمن)
-            const handleDeleteOrder = async (orderId) => {
-                if(!confirm('هل أنت متأكد من حذف هذا الطلب؟')) return;
-                try {
-                    if (window.firebaseDB) {
-                        const orderRef = window.fbDoc(window.firebaseDB, 'artifacts', window.firebaseAppId, 'public', 'data', 'orders', orderId);
-                        await window.fbDeleteDoc(orderRef);
-                    }
-                } catch(e) {
-                    setOrders(orders.filter(o => o.id !== orderId));
-                }
-            };
-
-            // إضافة منتج جديد (للأدمن)
-            const handleAddProduct = async (e) => {
-                e.preventDefault();
-                if(!newProduct.name || !newProduct.price) return;
-
-                const prodData = {
-                    name: newProduct.name,
-                    price: parseFloat(newProduct.price),
-                    category: newProduct.category,
-                    image: newProduct.image || 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=500&q=80'
-                };
-
-                try {
-                    if (window.firebaseDB) {
-                        const productsCol = window.fbCollection(window.firebaseDB, 'artifacts', window.firebaseAppId, 'public', 'data', 'products');
-                        await window.fbAddDoc(productsCol, prodData);
-                    } else {
-                        setProducts([...products, { id: Date.now().toString(), ...prodData }]);
-                    }
-                } catch(e) {
-                    setProducts([...products, { id: Date.now().toString(), ...prodData }]);
-                }
-
-                setNewProduct({ name: '', price: '', category: 'العناية بالبشرة', image: '' });
-                alert('تم نشر المنتج بنجاح واستعراضه في المتجر!');
-            };
-
-            // حذف منتج (للأدمن)
-            const handleDeleteProduct = async (productId) => {
-                if(!confirm('هل تريد حذف هذا المنتج من المتجر؟')) return;
-                try {
-                    if (window.firebaseDB) {
-                        const prodRef = window.fbDoc(window.firebaseDB, 'artifacts', window.firebaseAppId, 'public', 'data', 'products', productId);
-                        await window.fbDeleteDoc(prodRef);
-                    }
-                } catch(e) {
-                    setProducts(products.filter(p => p.id !== productId));
-                }
-            };
-
-            const filteredProducts = selectedCategory === 'الكل' 
-                ? products 
-                : products.filter(p => p.category === selectedCategory);
-
-            const cartCount = cart.reduce((sum, item) => sum + item.qty, 0);
-            const cartTotal = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
 
             return (
-                <div className="flex flex-col min-h-screen">
-                    {/* Header */}
-                    <header className="sticky top-0 z-40 glass-header border-b border-pink-100 shadow-sm">
-                        <div className="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
-                            <div className="flex items-center gap-2">
-                                <span className="text-3xl">💄</span>
-                                <div>
-                                    <h1 className="text-2xl font-black text-pink-600 tracking-tight">TH Cosmetics</h1>
-                                    <p className="text-xs text-pink-400 font-semibold">جمالك بأفضل المنتجات الأصلية</p>
-                                </div>
-                            </div>
-
-                            <div className="flex items-center gap-3">
-                                {!isAdmin ? (
-                                    <>
-                                        <button 
-                                            onClick={() => setIsCartOpen(true)}
-                                            className="relative bg-pink-100 text-pink-700 hover:bg-pink-200 px-4 py-2 rounded-full font-bold flex items-center gap-2 transition"
-                                        >
-                                            <i className="fa-solid fa-bag-shopping text-lg"></i>
-                                            <span>السلة</span>
-                                            {cartCount > 0 && (
-                                                <span className="bg-pink-600 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
-                                                    {cartCount}
-                                                </span>
-                                            )}
-                                        </button>
-                                        <button 
-                                            onClick={() => {
-                                                const pass = prompt('أدخل كلمة سر الأدمن:');
-                                                if(pass === 'admin123') setIsAdmin(true);
-                                                else if(pass) alert('كلمة السر خاطئة!');
-                                            }}
-                                            className="bg-gray-800 text-white hover:bg-gray-900 px-4 py-2 rounded-full text-sm font-bold flex items-center gap-1 transition"
-                                        >
-                                            <i className="fa-solid fa-lock text-xs"></i> دخول الأدمن
-                                        </button>
-                                    </>
-                                ) : (
-                                    <div className="flex items-center gap-2">
-                                        <span className="bg-green-100 text-green-700 text-xs px-3 py-1 rounded-full font-bold">الأدمن متصل 🟢</span>
-                                        <button 
-                                            onClick={() => setIsAdmin(false)}
-                                            className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-full text-sm font-bold transition"
-                                        >
-                                            الخروج من لوحة التحكم
-                                        </button>
-                                    </div>
-                                )}
-                            </div>
+                <div className="min-h-screen flex flex-col">
+                    {/* شريط العنوان */}
+                    <header className="bg-white shadow-md p-4 flex justify-between items-center">
+                        <h1 className="text-xl font-bold text-pink-600">TH Cosmetics 💄</h1>
+                        <div>
+                            {isAdmin ? (
+                                <button onClick={() => setIsAdmin(false)} className="bg-red-500 text-white px-4 py-2 rounded-lg text-sm font-bold">خروج من لوحة الأدمن</button>
+                            ) : (
+                                <button onClick={() => {
+                                    const p = prompt('أدخل كلمة سر الأدمن:');
+                                    if(p === 'admin123') setIsAdmin(true);
+                                    else if(p !== null) alert('كلمة السر خطأ');
+                                }} className="bg-pink-600 text-white px-4 py-2 rounded-lg text-sm font-bold">دخول الأدمن 🔐</button>
+                            )}
                         </div>
                     </header>
 
-                    {/* تنبيه نجاح الطلب */}
-                    {orderSuccessMsg && (
-                        <div className="bg-green-500 text-white p-4 text-center font-bold text-lg shadow-lg flex items-center justify-center gap-2 animate-bounce">
-                            <i className="fa-solid fa-circle-check text-2xl"></i>
-                            تم استلام طلبك بنجاح! سيتم التواصل معك هاتفياً لتأكيد الشحن خلال ساعات.
-                        </div>
-                    )}
-
-                    {/* Content Area */}
-                    <main className="flex-1 max-w-7xl mx-auto w-full p-4 sm:p-6">
+                    {/* المحتوى */}
+                    <main className="flex-1 p-4 max-w-5xl mx-auto w-full">
                         {isAdmin ? (
-                            /* لوحة تحكم الأدمن */
-                            <div className="space-y-8">
-                                <div className="pink-gradient text-white p-6 rounded-2xl shadow-lg flex justify-between items-center">
-                                    <div>
-                                        <h2 className="text-3xl font-extrabold mb-1">لوحة إشراف المتجر 👑</h2>
-                                        <p className="text-pink-100 text-sm">متابعة الأوردرات الواردة دائمياً وإضافة أو حذف المنتجات</p>
-                                    </div>
-                                    <div className="bg-white/20 px-5 py-3 rounded-xl text-center backdrop-blur-md">
-                                        <span className="block text-2xl font-black">{orders.length}</span>
-                                        <span className="text-xs">إجمالي الطلبات</span>
-                                    </div>
-                                </div>
-
-                                {/* قسم إدخال منتج جديد */}
-                                <div className="bg-white p-6 rounded-2xl shadow-sm border border-pink-100">
-                                    <h3 className="text-xl font-bold mb-4 text-gray-800 flex items-center gap-2">
-                                        <i className="fa-solid fa-plus-circle text-pink-500"></i> إضافة منتج جديد للمتجر
-                                    </h3>
-                                    <form onSubmit={handleAddProduct} className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                                        <input 
-                                            type="text" 
-                                            placeholder="اسم المنتج" 
-                                            value={newProduct.name} 
-                                            onChange={e => setNewProduct({...newProduct, name: e.target.value})}
-                                            className="p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-pink-500 outline-none"
-                                            required 
-                                        />
-                                        <input 
-                                            type="number" 
-                                            placeholder="السعر (ج.م)" 
-                                            value={newProduct.price} 
-                                            onChange={e => setNewProduct({...newProduct, price: e.target.value})}
-                                            className="p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-pink-500 outline-none"
-                                            required 
-                                        />
-                                        <select 
-                                            value={newProduct.category} 
-                                            onChange={e => setNewProduct({...newProduct, category: e.target.value})}
-                                            className="p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-pink-500 outline-none bg-white"
-                                        >
-                                            <option>العناية بالبشرة</option>
-                                            <option>العناية بالشعر</option>
-                                            <option>المكياج</option>
-                                        </select>
-                                        <input 
-                                            type="url" 
-                                            placeholder="رابط الصورة (اختياري)" 
-                                            value={newProduct.image} 
-                                            onChange={e => setNewProduct({...newProduct, image: e.target.value})}
-                                            className="p-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-pink-500 outline-none"
-                                        />
-                                        <button 
-                                            type="submit" 
-                                            className="md:col-span-4 bg-pink-600 hover:bg-pink-700 text-white font-bold py-3 rounded-xl transition shadow-md"
-                                        >
-                                            حفظ ونشر المنتج فوراً
-                                        </button>
-                                    </form>
-                                </div>
-
-                                {/* قائمة الطلبات الواردة */}
-                                <div className="bg-white p-6 rounded-2xl shadow-sm border border-pink-100">
-                                    <h3 className="text-xl font-bold mb-4 text-gray-800 flex items-center gap-2">
-                                        <i className="fa-solid fa-boxes-packing text-pink-500"></i> الطلبات الواردة من العملاء ({orders.length})
-                                    </h3>
-
-                                    {orders.length === 0 ? (
-                                        <div className="text-center py-12 text-gray-400">
-                                            <i className="fa-solid fa-inbox text-5xl mb-3"></i>
-                                            <p>لا توجد أوردرات مسجلة حتى الآن.</p>
-                                        </div>
-                                    ) : (
-                                        <div className="space-y-4">
-                                            {orders.map(order => (
-                                                <div key={order.id} className="border border-gray-100 bg-pink-50/20 p-5 rounded-xl flex flex-col md:flex-row justify-between gap-4">
-                                                    <div className="space-y-2 flex-1">
-                                                        <div className="flex items-center gap-3">
-                                                            <span className="font-bold text-lg text-pink-600">طلب #{order.id.toString().slice(-5)}</span>
-                                                            <span className="text-xs bg-gray-200 text-gray-700 px-2 py-1 rounded">{order.date}</span>
-                                                            <span className={`text-xs px-3 py-1 rounded-full font-bold ${
-                                                                order.status === 'تم التسليم' ? 'bg-green-100 text-green-700' :
-                                                                order.status === 'تم التجهيز' ? 'bg-blue-100 text-blue-700' : 'bg-yellow-100 text-yellow-700'
-                                                            }`}>
-                                                                {order.status || 'قيد الانتظار'}
-                                                            </span>
-                                                        </div>
-                                                        <div className="bg-white p-3 rounded-lg border border-gray-100 text-sm">
-                                                            <p><strong>العميل:</strong> {order.customer?.name}</p>
-                                                            <p><strong>الهاتف:</strong> <a href={`tel:${order.customer?.phone}`} className="text-pink-600 underline font-bold">{order.customer?.phone}</a></p>
-                                                            <p><strong>العنوان:</strong> {order.customer?.address}</p>
-                                                        </div>
-                                                        <div className="text-sm">
-                                                            <strong>المنتجات المطلوبة:</strong>
-                                                            <ul className="list-disc list-inside text-gray-600 mt-1">
-                                                                {order.items?.map((item, idx) => (
-                                                                    <li key={idx}>{item.name} × {item.qty} ({item.price * item.qty} ج.م)</li>
-                                                                ))}
-                                                            </ul>
-                                                        </div>
-                                                    </div>
-
-                                                    <div className="flex flex-col justify-between items-end gap-3 min-w-[180px]">
-                                                        <span className="text-xl font-extrabold text-green-600">الإجمالي: {order.total} ج.م</span>
-                                                        <div className="flex flex-col w-full gap-2">
-                                                            <select 
-                                                                value={order.status || 'قيد الانتظار'} 
-                                                                onChange={(e) => handleStatusChange(order.id, e.target.value)}
-                                                                className="p-2 text-sm border rounded-lg bg-white"
-                                                            >
-                                                                <option>قيد الانتظار</option>
-                                                                <option>تم التجهيز</option>
-                                                                <option>تم التسليم</option>
-                                                            </select>
-                                                            <button 
-                                                                onClick={() => handleDeleteOrder(order.id)}
-                                                                className="bg-red-100 hover:bg-red-200 text-red-600 text-xs py-2 rounded-lg font-bold transition"
-                                                            >
-                                                                <i className="fa-solid fa-trash"></i> حذف الطلب
-                                                            </button>
-                                                        </div>
-                                                    </div>
+                            <div>
+                                <h2 className="text-2xl font-bold mb-4 text-gray-700">لوحة تحكم الأدمن - الطلبات الواردة ({orders.length})</h2>
+                                {orders.length === 0 ? (
+                                    <p className="text-gray-500 bg-white p-6 rounded-xl shadow">لا توجد طلبات حتى الآن.</p>
+                                ) : (
+                                    <div className="space-y-4">
+                                        {orders.map(o => (
+                                            <div key={o.id} className="bg-white p-4 rounded-xl shadow border-r-4 border-pink-500">
+                                                <div className="flex justify-between font-bold text-pink-600 mb-2">
+                                                    <span>طلب رقم: #{o.id.toString().slice(-4)}</span>
+                                                    <span>{o.date}</span>
                                                 </div>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
+                                                <p><strong>الاسم:</strong> {o.name}</p>
+                                                <p><strong>الهاتف:</strong> {o.phone}</p>
+                                                <p><strong>العنوان:</strong> {o.address}</p>
+                                                <div className="mt-2 bg-gray-50 p-2 rounded">
+                                                    <strong>المنتجات:</strong>
+                                                    <ul className="list-disc list-inside text-sm">
+                                                        {o.items.map((it, i) => (
+                                                            <li key={i}>{it.name} - {it.price} ج.م</li>
+                                                        ))}
+                                                    </ul>
+                                                </div>
+                                                <p className="mt-2 font-bold text-green-600">الإجمالي: {o.total} ج.م</p>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                         ) : (
-                            /* واجهة العملاء المتجر الرئيسي */
                             <div>
-                                {/* شريط التصنيفات */}
-                                <div className="flex gap-2 overflow-x-auto pb-4 mb-6 scrollbar-none">
-                                    {['الكل', 'العناية بالبشرة', 'العناية بالشعر', 'المكياج'].map(cat => (
-                                        <button 
-                                            key={cat}
-                                            onClick={() => setSelectedCategory(cat)}
-                                            className={`px-5 py-2.5 rounded-full font-bold text-sm whitespace-nowrap transition ${
-                                                selectedCategory === cat 
-                                                    ? 'bg-pink-600 text-white shadow-md' 
-                                                    : 'bg-white text-gray-600 hover:bg-pink-100'
-                                            }`}
-                                        >
-                                            {cat}
-                                        </button>
-                                    ))}
-                                </div>
+                                {orderSuccess && (
+                                    <div className="bg-green-100 border border-green-400 text-green-700 p-4 rounded mb-4 text-center font-bold">
+                                        🎉 تم إرسال طلبك بنجاح! سيتم التواصل معك قريباً لتأكيد الشحن.
+                                    </div>
+                                )}
 
-                                {/* قائمة المنتجات */}
-                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                                    {filteredProducts.map(product => (
-                                        <div key={product.id} className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md border border-pink-100 flex flex-col justify-between transition group relative">
-                                            {isAdmin && (
-                                                <button 
-                                                    onClick={() => handleDeleteProduct(product.id)}
-                                                    className="absolute top-2 left-2 bg-red-500 text-white w-8 h-8 rounded-full flex items-center justify-center z-10 shadow hover:bg-red-600"
-                                                    title="حذف المنتج"
-                                                >
-                                                    <i className="fa-solid fa-trash text-xs"></i>
-                                                </button>
-                                            )}
-                                            <div className="relative h-48 overflow-hidden bg-gray-100">
-                                                <img 
-                                                    src={product.image} 
-                                                    alt={product.name}
-                                                    className="w-full h-full object-cover group-hover:scale-105 transition duration-300" 
-                                                    onError={(e) => { e.target.src = 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=500&q=80'; }}
-                                                />
-                                                <span className="absolute bottom-2 right-2 bg-pink-600/90 backdrop-blur-sm text-white text-xs px-2.5 py-1 rounded-full font-semibold">
-                                                    {product.category}
-                                                </span>
-                                            </div>
-                                            <div className="p-4 flex-1 flex flex-col justify-between">
-                                                <div>
-                                                    <h3 className="font-bold text-gray-800 text-base mb-2 line-clamp-2">{product.name}</h3>
-                                                </div>
-                                                <div className="mt-4 flex justify-between items-center">
-                                                    <div>
-                                                        <span className="text-xl font-extrabold text-pink-600">{product.price}</span>
-                                                        <span className="text-xs text-gray-500 mr-1">ج.م</span>
-                                                    </div>
-                                                    <button 
-                                                        onClick={() => addToCart(product)}
-                                                        className="bg-pink-600 hover:bg-pink-700 text-white px-4 py-2 rounded-xl text-sm font-bold transition flex items-center gap-1 shadow-sm"
-                                                    >
-                                                        <i className="fa-solid fa-cart-plus"></i> إضافة
-                                                    </button>
-                                                </div>
+                                <h2 className="text-2xl font-bold mb-4 text-gray-700">منتجات التجميل والعناية</h2>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                                    {products.map(prod => (
+                                        <div key={prod.id} className="bg-white p-4 rounded-xl shadow flex gap-4 items-center">
+                                            <img src={prod.image} alt={prod.name} className="w-20 h-20 object-cover rounded-lg" />
+                                            <div className="flex-1">
+                                                <span className="text-xs bg-pink-100 text-pink-600 px-2 py-1 rounded">{prod.category}</span>
+                                                <h3 className="font-bold mt-1">{prod.name}</h3>
+                                                <p className="text-pink-600 font-bold">{prod.price} ج.م</p>
+                                                <button onClick={() => addToCart(prod)} className="mt-2 bg-pink-600 text-white px-3 py-1 rounded text-sm font-bold">إضافة للسلة</button>
                                             </div>
                                         </div>
                                     ))}
+                                </div>
+
+                                {/* سلة الشراء */}
+                                <div className="bg-white p-6 rounded-xl shadow">
+                                    <h3 className="text-xl font-bold mb-4">سلة المشتريات ({cart.length})</h3>
+                                    {cart.length === 0 ? (
+                                        <p className="text-gray-500">السلة فارغة، قم بإضافة منتجات.</p>
+                                    ) : (
+                                        <div>
+                                            <ul className="divide-y mb-4">
+                                                {cart.map((item, index) => (
+                                                    <li key={index} className="py-2 flex justify-between items-center">
+                                                        <span>{item.name} - <strong>{item.price} ج.م</strong></span>
+                                                        <button onClick={() => removeFromCart(index)} className="text-red-500 text-sm">حذف</button>
+                                                    </li>
+                                                ))}
+                                            </ul>
+
+                                            <div className="space-y-3 border-t pt-4">
+                                                <h4 className="font-bold text-gray-700">بيانات الشحن لإتمام الطلب:</h4>
+                                                <input type="text" placeholder="الاسم بالكامل" value={customerName} onChange={e => setCustomerName(e.target.value)} className="w-full p-2 border rounded" />
+                                                <input type="tel" placeholder="رقم الهاتف" value={customerPhone} onChange={e => setCustomerPhone(e.target.value)} className="w-full p-2 border rounded" />
+                                                <input type="text" placeholder="العنوان بالتفصيل" value={customerAddress} onChange={e => setCustomerAddress(e.target.value)} className="w-full p-2 border rounded" />
+                                                <button onClick={handleCheckout} className="w-full bg-green-600 text-white py-3 rounded-lg font-bold text-lg hover:bg-green-700 transition">تأكيد إرسال الطلب ✓</button>
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         )}
                     </main>
-
-                    {/* سلة المشتريات (Drawer) */}
-                    {isCartOpen && (
-                        <div className="fixed inset-0 z-50 flex justify-end bg-black/50 backdrop-blur-sm">
-                            <div className="bg-white w-full max-w-md h-full shadow-2xl flex flex-col justify-between p-6 overflow-y-auto animate-slide-left">
-                                <div>
-                                    <div className="flex justify-between items-center pb-4 border-b border-gray-100 mb-4">
-                                        <h3 className="text-xl font-extrabold text-gray-800 flex items-center gap-2">
-                                            <i className="fa-solid fa-bag-shopping text-pink-600"></i> سلة التسوق
-                                        </h3>
-                                        <button onClick={() => setIsCartOpen(false)} className="text-gray-400 hover:text-gray-600 text-xl">
-                                            <i className="fa-solid fa-xmark"></i>
-                                        </button>
-                                    </div>
-
-                                    {cart.length === 0 ? (
-                                        <div className="text-center py-12 text-gray-400">
-                                            <i className="fa-solid fa-cart-flatbed text-5xl mb-3"></i>
-                                            <p>السلة فارغة حالياً. قم ببرمجة سلتك بالمنتجات!</p>
-                                        </div>
-                                    ) : (
-                                        <div className="space-y-4">
-                                            {cart.map(item => (
-                                                <div key={item.id} className="flex justify-between items-center border-b pb-3">
-                                                    <div className="flex-1">
-                                                        <h4 className="font-bold text-sm text-gray-800">{item.name}</h4>
-                                                        <span className="text-xs text-pink-600 font-bold">{item.price} ج.م</span>
-                                                    </div>
-                                                    <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
-                                                        <button onClick={() => updateQty(item.id, -1)} className="w-6 h-6 bg-white rounded font-bold text-gray-600">-</button>
-                                                        <span className="text-sm font-bold px-1">{item.qty}</span>
-                                                        <button onClick={() => updateQty(item.id, 1)} className="w-6 h-6 bg-white rounded font-bold text-gray-600">+</button>
-                                                    </div>
-                                                </div>
-                                            ))}
-
-                                            <div className="pt-2">
-                                                <div className="flex justify-between font-extrabold text-lg text-gray-800 mb-4">
-                                                    <span>إجمالي الحساب:</span>
-                                                    <span className="text-pink-600">{cartTotal} ج.م</span>
-                                                </div>
-
-                                                <form onSubmit={handleOrderSubmit} className="space-y-3 bg-pink-50 p-4 rounded-xl">
-                                                    <h4 className="font-bold text-gray-700 text-sm mb-2">بيانات الشحن للتوصيل:</h4>
-                                                    <input 
-                                                        type="text" 
-                                                        placeholder="الاسم بالكامل" 
-                                                        value={customerInfo.name} 
-                                                        onChange={e => setCustomerInfo({...customerInfo, name: e.target.value})}
-                                                        className="w-full p-2.5 text-sm border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-pink-500"
-                                                        required 
-                                                    />
-                                                    <input 
-                                                        type="tel" 
-                                                        placeholder="رقم الهاتف للتواصل" 
-                                                        value={customerInfo.phone} 
-                                                        onChange={e => setCustomerInfo({...customerInfo, phone: e.target.value})}
-                                                        className="w-full p-2.5 text-sm border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-pink-500"
-                                                        required 
-                                                    />
-                                                    <textarea 
-                                                        placeholder="العنوان التفصيلي (المحافظة، المنطقة، الشارع)" 
-                                                        value={customerInfo.address} 
-                                                        onChange={e => setCustomerInfo({...customerInfo, address: e.target.value})}
-                                                        className="w-full p-2.5 text-sm border border-gray-200 rounded-lg outline-none focus:ring-2 focus:ring-pink-500 h-20"
-                                                        required
-                                                    ></textarea>
-                                                    <button 
-                                                        type="submit" 
-                                                        className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-xl shadow transition text-base"
-                                                    >
-                                                        تأكيد وإرسال الطلب الآن
-                                                    </button>
-                                                </form>
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-                    )}
                 </div>
             );
         }
 
-        ReactDOM.render(<MainApp />, document.getElementById('root'));
+        ReactDOM.render(<App />, document.getElementById('root'));
     </script>
 </body>
 </html>
