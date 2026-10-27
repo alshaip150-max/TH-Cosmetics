@@ -10,112 +10,173 @@
 </head>
 <body class="bg-pink-50 text-gray-800">
 
-    <!-- Header -->
     <header class="bg-white shadow-md p-4 flex justify-between items-center sticky top-0 z-50">
         <div class="flex items-center gap-3">
             <img id="storeLogoImg" src="https://images.unsplash.com/photo-1586495777744-4413f21062fa?auto=format&fit=crop&w=100&q=80" alt="Logo" class="w-10 h-10 object-cover rounded-full border border-pink-300">
             <h1 class="text-xl font-bold text-pink-600">TH Cosmetics 💄</h1>
         </div>
-        <span class="text-xs bg-pink-100 text-pink-600 px-3 py-1 rounded-full font-bold">متجر التجميل والعناية</span>
+        <div class="flex gap-2">
+            <button onclick="openMyOrders()" class="bg-pink-100 text-pink-600 px-3 py-2 rounded-lg text-xs font-bold hover:bg-pink-200 transition">طلباتي 📦</button>
+            <span class="text-xs bg-pink-50 text-pink-600 px-3 py-1 rounded-full font-bold flex items-center">عناية وتجميل</span>
+        </div>
     </header>
 
     <main class="max-w-4xl mx-auto p-4">
-        <!-- رسالة نجاح الطلب -->
         <div id="successAlert" class="hidden bg-green-500 text-white p-4 rounded-xl text-center font-bold mb-6 shadow-lg">
-            🎉 تم إرسال طلبك بنجاح! سيتم التواصل معك قريباً لتأكيد الشحن.
+            🎉 تم إرسال طلبك بنجاح! يمكنك متابعته من قسم "طلباتي".
         </div>
 
-        <h2 class="text-2xl font-bold text-gray-700 mb-4">منتجات التجميل والعناية</h2>
-        
-        <!-- قائمة المنتجات -->
-        <div id="productsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8"></div>
+        <!-- قسم عرض المنتجات -->
+        <div id="storeSection">
+            <h2 class="text-2xl font-bold text-gray-700 mb-4">منتجات التجميل والعناية</h2>
+            <div id="productsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8"></div>
 
-        <!-- سلة المشتريات -->
-        <div class="bg-white p-6 rounded-xl shadow-lg border border-pink-100">
-            <h3 class="text-xl font-bold mb-4 text-gray-800 flex justify-between items-center">
-                <span>سلة المشتريات 🛒</span>
-                <span id="cartCountBadge" class="bg-pink-100 text-pink-600 text-sm px-3 py-1 rounded-full">0 منتجات</span>
-            </h3>
-            
-            <div id="cartItemsList" class="divide-y mb-4">
-                <p class="text-gray-400 py-2">السلة فارغة حالياً. قم بإضافة منتجات من الأعلى.</p>
+            <div class="bg-white p-6 rounded-xl shadow-lg border border-pink-100">
+                <h3 class="text-xl font-bold mb-4 text-gray-800 flex justify-between items-center">
+                    <span>سلة المشتريات 🛒</span>
+                    <span id="cartCountBadge" class="bg-pink-100 text-pink-600 text-sm px-3 py-1 rounded-full">0 منتجات</span>
+                </h3>
+                <div id="cartItemsList" class="divide-y mb-4">
+                    <p class="text-gray-400 py-2">السلة فارغة حالياً. قم بإضافة منتجات من الأعلى.</p>
+                </div>
+                
+                <div id="checkoutForm" class="space-y-3 border-t pt-4 hidden">
+                    <div class="bg-pink-50 p-3 rounded-lg text-sm text-pink-700 flex justify-between font-semibold">
+                        <span>رسوم التوصيل (الدليفاري):</span>
+                        <span>50 ج.م</span>
+                    </div>
+                    <h4 class="font-bold text-gray-700 pt-2">بيانات الشحن لإتمام الطلب:</h4>
+                    <input type="text" id="custName" placeholder="الاسم بالكامل" class="w-full p-3 border rounded-lg focus:outline-pink-500">
+                    <input type="tel" id="custPhone" placeholder="رقم الهاتف" class="w-full p-3 border rounded-lg focus:outline-pink-500">
+                    <input type="text" id="custAddress" placeholder="العنوان بالتفصيل" class="w-full p-3 border rounded-lg focus:outline-pink-500">
+                    <button type="button" onclick="submitOrder()" class="w-full bg-green-600 text-white py-3 rounded-lg font-bold text-lg hover:bg-green-700 transition shadow-md">تأكيد إرسال الطلب ✓</button>
+                </div>
             </div>
+        </div>
 
-            <div id="checkoutForm" class="space-y-3 border-t pt-4 hidden">
-                <h4 class="font-bold text-gray-700">بيانات الشحن لإتمام الطلب:</h4>
-                <input type="text" id="custName" placeholder="الاسم بالكامل" class="w-full p-3 border rounded-lg focus:outline-pink-500">
-                <input type="tel" id="custPhone" placeholder="رقم الهاتف" class="w-full p-3 border rounded-lg focus:outline-pink-500">
-                <input type="text" id="custAddress" placeholder="العنوان بالتفصيل" class="w-full p-3 border rounded-lg focus:outline-pink-500">
-                <button type="button" onclick="submitOrder()" class="w-full bg-green-600 text-white py-3 rounded-lg font-bold text-lg hover:bg-green-700 transition shadow-md">تأكيد إرسال الطلب ✓</button>
+        <!-- صفحة تفاصيل المنتج -->
+        <div id="productDetailsSection" class="hidden bg-white p-6 rounded-xl shadow-lg border border-pink-200">
+            <button onclick="backToStore()" class="mb-4 text-pink-600 font-bold text-sm hover:underline">← العودة للمتجر</button>
+            <div id="productDetailsContent"></div>
+        </div>
+
+        <!-- صفحة طلباتي -->
+        <div id="myOrdersSection" class="hidden bg-white p-6 rounded-xl shadow-lg border border-pink-200">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold text-gray-800">📦 متابعة طلباتي السابقة</h2>
+                <button onclick="backToStore()" class="bg-gray-200 text-gray-700 px-3 py-1 rounded text-xs font-bold hover:bg-gray-300">العودة للمتجر</button>
+            </div>
+            <div id="myOrdersList" class="space-y-4">
+                <p class="text-gray-400 text-center py-4">لا توجد طلبات مسجلة حتى الآن.</p>
             </div>
         </div>
     </main>
 
     <script>
         let cart = [];
+        let lastProductsHash = "";
 
         window.onload = function() {
             loadStoreLogo();
-            renderProducts();
+            fetchAndRenderProducts();
             renderCart();
-            // تحديث المنتجات تلقائياً كل ثانية لضمان ظهور أي تعديل فورا
-            setInterval(renderProducts, 1000);
+            setInterval(fetchAndRenderProducts, 1000);
         };
 
         function loadStoreLogo() {
             const savedLogo = localStorage.getItem('th_logo');
-            if (savedLogo) {
-                document.getElementById('storeLogoImg').src = savedLogo;
-            }
+            if (savedLogo) document.getElementById('storeLogoImg').src = savedLogo;
         }
 
-        function getProducts() {
+        function getStoredProductsList() {
             let defaultProducts = [
-                { id: 1, name: 'سيروم أنوا بيتش (Anua Peach 70)', price: 450, category: 'العناية بالبشرة', image: 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=300&q=80' },
-                { id: 2, name: 'كولاجين البرتقال الطبيعي', price: 350, category: 'العناية بالشعر', image: 'https://images.unsplash.com/photo-1608248597359-9945c57b7852?auto=format&fit=crop&w=300&q=80' },
-                { id: 3, name: 'مرطب الشفاه الكوري', price: 200, category: 'المكياج', image: 'https://images.unsplash.com/photo-1586495777744-4413f21062fa?auto=format&fit=crop&w=300&q=80' }
+                { id: 1, name: 'سيروم أنوا بيتش (Anua Peach 70)', price: 450, category: 'العناية بالبشرة', description: 'سيروم كوري غني بمستخلص الخوخ والنياسيناميد لتصفية البشرة وإعطائها نضارة فورية وإزالة البقع.', image: 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=300&q=80' },
+                { id: 2, name: 'كولاجين البرتقال الطبيعي', price: 350, category: 'العناية بالشعر', description: 'مشروب ومكمل كولاجين طبيعي بنكهة البرتقال لتقوية الشعر، نضارة البشرة، ودعم المفاصل.', image: 'https://images.unsplash.com/photo-1608248597359-9945c57b7852?auto=format&fit=crop&w=300&q=80' },
+                { id: 3, name: 'مرطب الشفاه الكوري', price: 200, category: 'المكياج', description: 'مرطب شفاه مغذي ومرطب بعمق يدوم طويلاً، يمنح الشفاه مظهر وملمس ناعم وطبيعي.', image: 'https://images.unsplash.com/photo-1586495777744-4413f21062fa?auto=format&fit=crop&w=300&q=80' }
             ];
-
-            const savedProducts = localStorage.getItem('th_products');
-            if (savedProducts) {
-                try {
-                    const parsed = JSON.parse(savedProducts);
-                    if (Array.isArray(parsed) && parsed.length > 0) {
-                        return parsed;
-                    }
-                } catch(e) {}
-            }
-            return defaultProducts;
+            const saved = localStorage.getItem('th_products');
+            return saved ? JSON.parse(saved) : defaultProducts;
         }
 
-        function renderProducts() {
-            const container = document.getElementById('productsGrid');
-            const products = getProducts();
+        function fetchAndRenderProducts() {
+            let products = getStoredProductsList();
+            const currentHash = JSON.stringify(products);
+            if (currentHash !== lastProductsHash) {
+                lastProductsHash = currentHash;
+                const container = document.getElementById('productsGrid');
+                container.innerHTML = products.map(p => `
+                    <div class="bg-white p-4 rounded-xl shadow flex gap-4 items-center border border-gray-100 hover:border-pink-300 transition">
+                        <img src="${p.image}" alt="${p.name}" class="w-20 h-20 object-cover rounded-lg cursor-pointer" onclick="showProductDetails(${p.id})">
+                        <div class="flex-1">
+                            <span class="text-xs bg-pink-100 text-pink-600 px-2 py-1 rounded font-bold">${p.category}</span>
+                            <h3 class="font-bold text-gray-800 mt-1 cursor-pointer hover:text-pink-600" onclick="showProductDetails(${p.id})">${p.name}</h3>
+                            <p class="text-pink-600 font-bold mt-1">${p.price} ج.م</p>
+                            <div class="mt-2 flex gap-2">
+                                <button onclick="showProductDetails(${p.id})" class="bg-gray-100 text-gray-700 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-gray-200 transition">التفاصيل 👁️</button>
+                                <button onclick="addToCartDirect(${p.id})" class="bg-pink-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-pink-700 transition">إضافة للسلة +</button>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        }
 
-            // منع إعادة رسم المنتجات لو لم يحدث تغيير لعدم إزعاج المستخدم
-            const currentHTML = products.map(p => `
-                <div class="bg-white p-4 rounded-xl shadow flex gap-4 items-center border border-gray-150">
-                    <img src="${p.image}" alt="${p.name}" class="w-20 h-20 object-cover rounded-lg">
-                    <div class="flex-1">
-                        <span class="text-xs bg-pink-100 text-pink-600 px-2 py-1 rounded font-bold">${p.category}</span>
-                        <h3 class="font-bold text-gray-800 mt-1">${p.name}</h3>
-                        <p class="text-pink-600 font-bold mt-1">${p.price} ج.م</p>
-                        <button onclick="addToCart(${p.id})" class="mt-2 bg-pink-600 text-white px-4 py.5 rounded-lg text-sm font-bold hover:bg-pink-700 transition">إضافة للسلة +</button>
+        function showProductDetails(productId) {
+            const products = getStoredProductsList();
+            const product = products.find(p => p.id === productId);
+            if (!product) return;
+
+            document.getElementById('storeSection').classList.add('hidden');
+            document.getElementById('myOrdersSection').classList.add('hidden');
+            const detailsSection = document.getElementById('productDetailsSection');
+            detailsSection.classList.remove('hidden');
+
+            document.getElementById('productDetailsContent').innerHTML = `
+                <div class="flex flex-col md:flex-row gap-6 items-center">
+                    <img src="${product.image}" alt="${product.name}" class="w-full md:w-64 h-64 object-cover rounded-xl shadow border">
+                    <div class="flex-1 space-y-3">
+                        <span class="text-xs bg-pink-100 text-pink-600 px-3 py-1 rounded font-bold">${product.category}</span>
+                        <h2 class="text-2xl font-bold text-gray-800">${product.name}</h2>
+                        <p class="text-pink-600 font-bold text-xl">${product.price} ج.م</p>
+                        <p class="text-gray-600 text-sm leading-relaxed">${product.description || 'منتج عالي الجودة للعناية الشخصية والتجميل.'}</p>
+                        
+                        <div class="flex items-center gap-3 pt-2">
+                            <label class="font-bold text-sm text-gray-700">الكمية:</label>
+                            <input type="number" id="detailQty" value="1" min="1" max="50" class="w-20 p-2 border rounded-lg text-center font-bold focus:outline-pink-500">
+                        </div>
+
+                        <button onclick="addDetailedToCart(${product.id})" class="w-full bg-pink-600 text-white py-3 rounded-xl font-bold hover:bg-pink-700 transition shadow">إضافة إلى سلة المشتريات 🛒</button>
                     </div>
                 </div>
-            `).join('');
+            `;
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
 
-            if (container.innerHTML !== currentHTML) {
-                container.innerHTML = currentHTML;
+        function backToStore() {
+            document.getElementById('productDetailsSection').classList.add('hidden');
+            document.getElementById('myOrdersSection').classList.add('hidden');
+            document.getElementById('storeSection').classList.remove('hidden');
+        }
+
+        function addToCartDirect(productId) {
+            const products = getStoredProductsList();
+            const product = products.find(p => p.id === productId);
+            if (product) {
+                cart.push({ ...product, quantity: 1 });
+                renderCart();
+                alert('تم إضافة المنتج إلى السلة بنجاح!');
             }
         }
 
-        function addToCart(productId) {
-            const products = getProducts();
+        function addDetailedToCart(productId) {
+            const products = getStoredProductsList();
             const product = products.find(p => p.id === productId);
+            const qty = parseInt(document.getElementById('detailQty').value) || 1;
             if (product) {
-                cart.push(product);
+                cart.push({ ...product, quantity: qty });
                 renderCart();
+                alert(`تمت إضافة (${qty}) قطعة من المنتج بنجاح للسلة!`);
+                backToStore();
             }
         }
 
@@ -129,7 +190,8 @@
             const form = document.getElementById('checkoutForm');
             const badge = document.getElementById('cartCountBadge');
             
-            badge.innerText = `${cart.length} منتجات`;
+            const totalItemsCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+            badge.innerText = `${totalItemsCount} منتجات`;
 
             if (cart.length === 0) {
                 list.innerHTML = `<p class="text-gray-400 py-2">السلة فارغة حالياً. قم بإضافة منتجات من الأعلى.</p>`;
@@ -137,22 +199,34 @@
                 return;
             }
 
-            let total = 0;
+            let subtotal = 0;
+            let deliveryFee = 50;
             list.innerHTML = cart.map((item, i) => {
-                total += item.price;
+                let itemTotal = item.price * item.quantity;
+                subtotal += itemTotal;
                 return `
-                    <div class="py-2 flex justify-between items-center">
-                        <span class="font-semibold text-gray-700">${item.name} - <strong class="text-pink-600">${item.price} ج.م</strong></span>
+                    <div class="py-3 flex justify-between items-center">
+                        <div>
+                            <h4 class="font-bold text-sm text-gray-800">${item.name}</h4>
+                            <span class="text-xs text-gray-500">${item.price} ج.م × ${item.quantity} = <strong class="text-pink-600">${itemTotal} ج.م</strong></span>
+                        </div>
                         <button onclick="removeFromCart(${i})" class="text-red-500 text-xs font-bold hover:underline">حذف</button>
                     </div>
                 `;
             }).join('') + `
-                <div class="py-3 font-bold text-lg text-gray-800 flex justify-between border-t mt-2">
-                    <span>الإجمالي:</span>
-                    <span class="text-green-600">${total} ج.م</span>
+                <div class="py-2 text-sm text-gray-600 flex justify-between border-t mt-2 pt-3">
+                    <span>مجموع المنتجات:</span>
+                    <span>${subtotal} ج.م</span>
+                </div>
+                <div class="py-2 text-sm text-gray-600 flex justify-between">
+                    <span>رسوم التوصيل:</span>
+                    <span>${deliveryFee} ج.م</span>
+                </div>
+                <div class="py-3 font-bold text-lg text-gray-800 flex justify-between border-t">
+                    <span>الإجمالي النهائي:</span>
+                    <span class="text-green-600">${subtotal + deliveryFee} ج.م</span>
                 </div>
             `;
-
             form.classList.remove('hidden');
         }
 
@@ -166,7 +240,10 @@
                 return;
             }
 
-            const total = cart.reduce((sum, item) => sum + item.price, 0);
+            let subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            let deliveryFee = 50;
+            let total = subtotal + deliveryFee;
+
             const newOrder = {
                 id: Date.now(),
                 date: new Date().toLocaleString('ar-EG'),
@@ -174,6 +251,8 @@
                 phone: phone,
                 address: address,
                 items: [...cart],
+                subtotal: subtotal,
+                deliveryFee: deliveryFee,
                 total: total,
                 status: 'قيد الانتظار'
             };
@@ -184,7 +263,6 @@
 
             cart = [];
             document.getElementById('custName').value = '';
-            document.getElementById('custPhone.value') ? document.getElementById('custPhone.value').value = '' : '';
             document.getElementById('custPhone').value = '';
             document.getElementById('custAddress').value = '';
             renderCart();
@@ -193,6 +271,53 @@
             alertBox.classList.remove('hidden');
             window.scrollTo({ top: 0, behavior: 'smooth' });
             setTimeout(() => alertBox.classList.add('hidden'), 5000);
+        }
+
+        function openMyOrders() {
+            document.getElementById('storeSection').classList.add('hidden');
+            document.getElementById('productDetailsSection').classList.add('hidden');
+            const ordersSection = document.getElementById('myOrdersSection');
+            ordersSection.classList.remove('hidden');
+
+            const container = document.getElementById('myOrdersList');
+            const orders = JSON.parse(localStorage.getItem('th_orders') || '[]');
+
+            if (orders.length === 0) {
+                container.innerHTML = `<p class="text-gray-400 text-center py-6">لا توجد طلبات مسجلة حتى الآن.</p>`;
+                return;
+            }
+
+            container.innerHTML = orders.map(o => {
+                let statusColor = 'bg-yellow-100 text-yellow-800';
+                if(o.status === 'جاري التجهيز') statusColor = 'bg-blue-100 text-blue-800';
+                if(o.status === 'جاري التوصيل') statusColor = 'bg-purple-100 text-purple-800';
+                if(o.status === 'تم الاستلام') statusColor = 'bg-green-100 text-green-800';
+
+                return `
+                    <div class="bg-gray-50 p-4 rounded-xl border border-pink-200 shadow-sm">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="font-bold text-pink-600 text-sm">طلب رقم: #${o.id.toString().slice(-4)}</span>
+                            <span class="text-xs px-3 py-1 rounded-full font-bold ${statusColor}">${o.status || 'قيد الانتظار'}</span>
+                        </div>
+                        <div class="text-xs text-gray-500 mb-2">${o.date}</div>
+                        <div class="text-sm space-y-1 text-gray-700">
+                            <p><strong>الاسم:</strong> ${o.name}</p>
+                            <p><strong>العنوان:</strong> ${o.address}</p>
+                        </div>
+                        <div class="mt-2 bg-white p-2.5 rounded border">
+                            <span class="text-xs font-bold text-pink-700">المنتجات المطلوبة:</span>
+                            <ul class="list-disc list-inside text-xs mt-1 space-y-1">
+                                ${o.items.map(it => `<li>${it.name} (الكمية: ${it.quantity}) - <strong>${it.price * it.quantity} ج.م</strong></li>`).join('')}
+                            </ul>
+                        </div>
+                        <div class="mt-3 flex justify-between items-center text-sm font-bold border-t pt-2">
+                            <span class="text-gray-600">الإجمالي شامل الدليفاري:</span>
+                            <span class="text-green-600">${o.total} ج.م</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
     </script>
 </body>
