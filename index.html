@@ -6,18 +6,14 @@
     <title>TH Cosmetics - متجر التجميل</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Cairo', sans-serif; }
-    </style>
+    <style>body { font-family: 'Cairo', sans-serif; }</style>
 </head>
 <body class="bg-pink-50 text-gray-800">
 
     <!-- Header -->
     <header class="bg-white shadow-md p-4 flex justify-between items-center sticky top-0 z-50">
         <h1 class="text-xl font-bold text-pink-600">TH Cosmetics 💄</h1>
-        <div id="authBtnContainer">
-            <button onclick="toggleAdminView()" class="bg-pink-600 text-white px-4 py-2 rounded-lg text-sm font-bold">دخول الأدمن 🔐</button>
-        </div>
+        <a href="admin.html" class="bg-pink-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-pink-700">دخول الأدمن 🔐</a>
     </header>
 
     <main class="max-w-4xl mx-auto p-4">
@@ -26,53 +22,46 @@
             🎉 تم إرسال طلبك بنجاح! سيتم التواصل معك قريباً لتأكيد الشحن.
         </div>
 
-        <!-- واجهة المتجر للعملاء -->
-        <div id="customerStoreView">
-            <h2 class="text-2xl font-bold text-gray-700 mb-4">منتجات التجميل والعناية</h2>
+        <h2 class="text-2xl font-bold text-gray-700 mb-4">منتجات التجميل والعناية</h2>
+        
+        <!-- قائمة المنتجات -->
+        <div id="productsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8"></div>
+
+        <!-- سلة المشتريات -->
+        <div class="bg-white p-6 rounded-xl shadow-lg border border-pink-100">
+            <h3 class="text-xl font-bold mb-4 text-gray-800 flex justify-between items-center">
+                <span>سلة المشتريات 🛒</span>
+                <span id="cartCountBadge" class="bg-pink-100 text-pink-600 text-sm px-3 py-1 rounded-full">0 منتجات</span>
+            </h3>
             
-            <!-- قائمة المنتجات -->
-            <div id="productsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8"></div>
-
-            <!-- سلة المشتريات -->
-            <div class="bg-white p-6 rounded-xl shadow-lg border border-pink-100">
-                <h3 class="text-xl font-bold mb-4 text-gray-800 flex justify-between items-center">
-                    <span>سلة المشتريات 🛒</span>
-                    <span id="cartCountBadge" class="bg-pink-100 text-pink-600 text-sm px-3 py-1 rounded-full">0 منتجات</span>
-                </h3>
-                
-                <div id="cartItemsList" class="divide-y mb-4">
-                    <p class="text-gray-400 py-2">السلة فارغة حالياً. قم بإضافة منتجات من الأعلى.</p>
-                </div>
-
-                <div id="checkoutForm" class="space-y-3 border-t pt-4 hidden">
-                    <h4 class="font-bold text-gray-700">بيانات الشحن لإتمام الطلب:</h4>
-                    <input type="text" id="custName" placeholder="الاسم بالكامل" class="w-full p-3 border rounded-lg focus:outline-pink-500">
-                    <input type="tel" id="custPhone" placeholder="رقم الهاتف" class="w-full p-3 border rounded-lg focus:outline-pink-500">
-                    <input type="text" id="custAddress" placeholder="العنوان بالتفصيل" class="w-full p-3 border rounded-lg focus:outline-pink-500">
-                    <button type="button" onclick="submitOrder()" class="w-full bg-green-600 text-white py-3 rounded-lg font-bold text-lg hover:bg-green-700 transition shadow-md">تأكيد إرسال الطلب ✓</button>
-                </div>
+            <div id="cartItemsList" class="divide-y mb-4">
+                <p class="text-gray-400 py-2">السلة فارغة حالياً. قم بإضافة منتجات من الأعلى.</p>
             </div>
-        </div>
 
-        <!-- واجهة الأدمن -->
-        <div id="adminDashboardView" class="hidden">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-bold text-gray-800">لوحة تحكم الأدمن 📋 (إدارة الطلبات والحالات)</h2>
+            <div id="checkoutForm" class="space-y-3 border-t pt-4 hidden">
+                <h4 class="font-bold text-gray-700">بيانات الشحن لإتمام الطلب:</h4>
+                <input type="text" id="custName" placeholder="الاسم بالكامل" class="w-full p-3 border rounded-lg focus:outline-pink-500">
+                <input type="tel" id="custPhone" placeholder="رقم الهاتف" class="w-full p-3 border rounded-lg focus:outline-pink-500">
+                <input type="text" id="custAddress" placeholder="العنوان بالتفصيل" class="w-full p-3 border rounded-lg focus:outline-pink-500">
+                <button type="button" onclick="submitOrder()" class="w-full bg-green-600 text-white py-3 rounded-lg font-bold text-lg hover:bg-green-700 transition shadow-md">تأكيد إرسال الطلب ✓</button>
             </div>
-            <div id="adminOrdersList" class="space-y-4"></div>
         </div>
     </main>
 
     <script>
-        const defaultProducts = [
+        let defaultProducts = [
             { id: 1, name: 'سيروم أنوا بيتش (Anua Peach 70)', price: 450, category: 'العناية بالبشرة', image: 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=300&q=80' },
-            { id: 2, name: 'كولاجين البرتقال الطبيعي', price: 350, category: 'العناية بالشعر', image: 'https://images.unsplash.com/photo-1608248597359-9945c57b7852?auto=format&fit=crop&w=300&q=80' }
+            { id: 2, name: 'كولاجين البرتقال الطبيعي', price: 350, category: 'العناية بالشعر', image: 'https://images.unsplash.com/photo-1608248597359-9945c57b7852?auto=format&fit=crop&w=300&q=80' },
+            { id: 3, name: 'مرطب الشفاه الكوري', price: 200, category: 'المكياج', image: 'https://images.unsplash.com/photo-1586495777744-4413f21062fa?auto=format&fit=crop&w=300&q=80' }
         ];
 
         let cart = [];
-        let isAdminLoggedIn = false;
 
         window.onload = function() {
+            const savedProducts = localStorage.getItem('th_products');
+            if (savedProducts) {
+                try { defaultProducts = JSON.parse(savedProducts); } catch(e) {}
+            }
             renderProducts();
             renderCart();
         };
@@ -156,7 +145,7 @@
                 address: address,
                 items: [...cart],
                 total: total,
-                status: 'قيد الانتظار' // الحالة الافتتاحية للطلب
+                status: 'قيد الانتظار'
             };
 
             let existingOrders = JSON.parse(localStorage.getItem('th_orders') || '[]');
@@ -173,92 +162,6 @@
             alertBox.classList.remove('hidden');
             window.scrollTo({ top: 0, behavior: 'smooth' });
             setTimeout(() => alertBox.classList.add('hidden'), 5000);
-        }
-
-        function toggleAdminView() {
-            const btnContainer = document.getElementById('authBtnContainer');
-            const storeView = document.getElementById('customerStoreView');
-            const adminView = document.getElementById('adminDashboardView');
-
-            if (!isAdminLoggedIn) {
-                const pass = prompt('أدخل كلمة سر الأدمن:');
-                if (pass === 'admin123') {
-                    isAdminLoggedIn = true;
-                    btnContainer.innerHTML = `<button onclick="toggleAdminView()" class="bg-red-500 text-white px-4 py-2 rounded-lg text-sm font-bold">خروج من الأدمن 🚪</button>`;
-                    storeView.classList.add('hidden');
-                    adminView.classList.remove('hidden');
-                    renderAdminOrders();
-                } else if (pass !== null) {
-                    alert('كلمة السر خاطئة!');
-                }
-            } else {
-                isAdminLoggedIn = false;
-                btnContainer.innerHTML = `<button onclick="toggleAdminView()" class="bg-pink-600 text-white px-4 py-2 rounded-lg text-sm font-bold">دخول الأدمن 🔐</button>`;
-                storeView.classList.remove('hidden');
-                adminView.classList.add('hidden');
-            }
-        }
-
-        // تغيير حالة الطلب من لوحة الأدمن
-        function updateOrderStatus(orderId, newStatus) {
-            let orders = JSON.parse(localStorage.getItem('th_orders') || '[]');
-            orders = orders.map(o => {
-                if (o.id === orderId) {
-                    o.status = newStatus;
-                }
-                return o;
-            });
-            localStorage.setItem('th_orders', JSON.stringify(orders));
-            renderAdminOrders();
-        }
-
-        function renderAdminOrders() {
-            const container = document.getElementById('adminOrdersList');
-            const orders = JSON.parse(localStorage.getItem('th_orders') || '[]');
-
-            if (orders.length === 0) {
-                container.innerHTML = `<div class="bg-white p-6 rounded-xl shadow text-center text-gray-400">لا توجد طلبات واردة حتى الآن.</div>`;
-                return;
-            }
-
-            container.innerHTML = orders.map(o => {
-                let statusColor = 'bg-yellow-100 text-yellow-800';
-                if(o.status === 'جاري التجهيز') statusColor = 'bg-blue-100 text-blue-800';
-                if(o.status === 'جاري التوصيل') statusColor = 'bg-purple-100 text-purple-800';
-                if(o.status === 'تم الاستلام') statusColor = 'bg-green-100 text-green-800';
-
-                return `
-                    <div class="bg-white p-5 rounded-xl shadow border-r-4 border-pink-500">
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="font-bold text-pink-600">طلب رقم: #${o.id.toString().slice(-4)}</span>
-                            <span class="text-xs px-3 py-1 rounded-full font-bold ${statusColor}">${o.status || 'قيد الانتظار'}</span>
-                        </div>
-                        <div class="text-xs text-gray-400 mb-3">${o.date}</div>
-                        <div class="text-sm space-y-1">
-                            <p><strong>الاسم:</strong> ${o.name}</p>
-                            <p><strong>الهاتف:</strong> ${o.phone}</p>
-                            <p><strong>العنوان:</strong> ${o.address}</p>
-                        </div>
-                        <div class="mt-3 bg-pink-50 p-3 rounded-lg">
-                            <strong class="text-xs text-pink-700">المنتجات المطلوبة:</strong>
-                            <ul class="list-disc list-inside text-sm mt-1">
-                                ${o.items.map(it => `<li>${it.name} - <strong>${it.price} ج.م</strong></li>`).join('')}
-                            </ul>
-                        </div>
-                        <div class="mt-3 flex justify-between items-center border-t pt-3">
-                            <span class="font-bold text-green-600">الإجمالي: ${o.total} ج.م</span>
-                            
-                            <!-- أزرار تغيير حالة الطلب -->
-                            <div class="flex gap-1 flex-wrap">
-                                <button onclick="updateOrderStatus(${o.id}, 'قيد الانتظار')" class="px-2 py-1 text-xs bg-yellow-100 text-yellow-700 rounded hover:bg-yellow-200 font-bold">قيد الانتظار</button>
-                                <button onclick="updateOrderStatus(${o.id}, 'جاري التجهيز')" class="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded hover:bg-blue-200 font-bold">جاري التجهيز</button>
-                                <button onclick="updateOrderStatus(${o.id}, 'جاري التوصيل')" class="px-2 py-1 text-xs bg-purple-100 text-purple-700 rounded hover:bg-purple-200 font-bold">جاري التوصيل</button>
-                                <button onclick="updateOrderStatus(${o.id}, 'تم الاستلام')" class="px-2 py-1 text-xs bg-green-100 text-green-700 rounded hover:bg-green-200 font-bold">تم الاستلام ✓</button>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }).join('');
         }
     </script>
 </body>
