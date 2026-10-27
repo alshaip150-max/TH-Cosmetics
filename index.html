@@ -7,6 +7,9 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
     <style>body { font-family: 'Cairo', sans-serif; }</style>
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 </head>
 <body class="bg-pink-50 text-gray-800">
 
@@ -15,164 +18,158 @@
             <img id="storeLogoImg" src="https://images.unsplash.com/photo-1586495777744-4413f21062fa?auto=format&fit=crop&w=100&q=80" alt="Logo" class="w-10 h-10 object-cover rounded-full border border-pink-300">
             <h1 class="text-xl font-bold text-pink-600">TH Cosmetics 💄</h1>
         </div>
-        <div class="flex gap-2">
-            <button onclick="openMyOrders()" class="bg-pink-100 text-pink-600 px-3 py-2 rounded-lg text-xs font-bold hover:bg-pink-200 transition">طلباتي السابقة 📦</button>
-        </div>
+        <button onclick="openMyOrders()" class="bg-pink-100 text-pink-600 px-3 py-2 rounded-lg text-xs font-bold hover:bg-pink-200">طلباتي 📦</button>
     </header>
 
     <main class="max-w-4xl mx-auto p-4">
-        <!-- قسم عرض المنتجات -->
+        <div id="successAlert" class="hidden bg-green-500 text-white p-4 rounded-xl text-center font-bold mb-6 shadow-lg">
+            🎉 تم تأكيد طلبك بنجاح! رقم الطلب: <span id="confirmedOrderId"></span>. يمكنك متابعة حالته من قسم "طلباتي".
+        </div>
+
+        <!-- المعرض الرئيسي للمنتجات -->
         <div id="storeSection">
             <h2 class="text-2xl font-bold text-gray-700 mb-4">منتجات التجميل والعناية</h2>
-            <div id="productsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8"></div>
+            <div id="productsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                <p class="text-gray-400">جاري تحميل المنتجات...</p>
+            </div>
 
+            <!-- سلة الشراء -->
             <div class="bg-white p-6 rounded-xl shadow-lg border border-pink-100">
                 <h3 class="text-xl font-bold mb-4 text-gray-800 flex justify-between items-center">
                     <span>سلة المشتريات 🛒</span>
                     <span id="cartCountBadge" class="bg-pink-100 text-pink-600 text-sm px-3 py-1 rounded-full">0 منتجات</span>
                 </h3>
                 <div id="cartItemsList" class="divide-y mb-4">
-                    <p class="text-gray-400 py-2">السلة فارغة حالياً. قم بإضافة منتجات من الأعلى.</p>
+                    <p class="text-gray-400 py-2">السلة فارغة حالياً.</p>
                 </div>
                 
                 <div id="checkoutForm" class="space-y-3 border-t pt-4 hidden">
                     <div class="bg-pink-50 p-3 rounded-lg text-sm text-pink-700 flex justify-between font-semibold">
-                        <span>رسوم التوصيل (الدليفاري):</span>
+                        <span>رسوم التوصيل:</span>
                         <span>50 ج.م</span>
                     </div>
-                    <h4 class="font-bold text-gray-700 pt-2">بيانات الشحن لإتمام الطلب عبر الواتساب:</h4>
+                    <h4 class="font-bold text-gray-700 pt-2">بيانات الشحن لإتمام الطلب:</h4>
                     <input type="text" id="custName" placeholder="الاسم بالكامل" class="w-full p-3 border rounded-lg focus:outline-pink-500">
                     <input type="tel" id="custPhone" placeholder="رقم الهاتف" class="w-full p-3 border rounded-lg focus:outline-pink-500">
                     <input type="text" id="custAddress" placeholder="العنوان بالتفصيل" class="w-full p-3 border rounded-lg focus:outline-pink-500">
-                    <button type="button" onclick="submitOrderToWhatsApp()" class="w-full bg-green-600 text-white py-3 rounded-lg font-bold text-lg hover:bg-green-700 transition shadow-md flex items-center justify-center gap-2">
-                        <span>إرسال الطلب عبر الواتساب 💬</span>
-                    </button>
+                    <button type="button" onclick="submitOrder()" class="w-full bg-green-600 text-white py-3 rounded-lg font-bold text-lg hover:bg-green-700 transition">تأكيد الطلب ✓</button>
                 </div>
             </div>
         </div>
 
         <!-- صفحة تفاصيل المنتج -->
         <div id="productDetailsSection" class="hidden bg-white p-6 rounded-xl shadow-lg border border-pink-200">
-            <button onclick="backToStore()" class="mb-4 text-pink-600 font-bold text-sm hover:underline">← العودة للمتجر</button>
+            <button onclick="backToStore()" class="mb-4 text-pink-600 font-bold text-sm">← العودة للمتجر</button>
             <div id="productDetailsContent"></div>
         </div>
 
         <!-- صفحة طلباتي -->
         <div id="myOrdersSection" class="hidden bg-white p-6 rounded-xl shadow-lg border border-pink-200">
             <div class="flex justify-between items-center mb-4">
-                <h2 class="text-xl font-bold text-gray-800">📦 طلباتي المحفوظة على هذا الجهاز</h2>
-                <button onclick="backToStore()" class="bg-gray-200 text-gray-700 px-3 py-1 rounded text-xs font-bold hover:bg-gray-300">العودة للمتجر</button>
+                <h2 class="text-xl font-bold text-gray-800">📦 متابعة طلباتي</h2>
+                <button onclick="backToStore()" class="bg-gray-200 text-gray-700 px-3 py-1 rounded text-xs font-bold">العودة للمتجر</button>
             </div>
-            <div id="myOrdersList" class="space-y-4">
-                <p class="text-gray-400 text-center py-4">لا توجد طلبات مسجلة على هذا الجهاز.</p>
-            </div>
+            <div id="myOrdersList" class="space-y-4"></div>
         </div>
     </main>
 
     <script>
+        // تم دمج مفاتيح مشروعك الخاصة بدقة
+        const firebaseConfig = {
+            apiKey: "AIzaSyA4rEfOdwXPEoEUQohP77fP-OoaVeJCVbc",
+            authDomain: "th-cosmetics-67a00.firebaseapp.com",
+            projectId: "th-cosmetics-67a00",
+            storageBucket: "th-cosmetics-67a00.appspot.com",
+            messagingSenderId: "966089361513",
+            appId: "1:966089361513:web:6de13125cb7a0e4543faf8",
+            measurementId: "G-SGJQYX78NK"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
         let cart = [];
-        let lastProductsHash = "";
+        let allProducts = [];
 
         window.onload = function() {
-            loadStoreLogo();
-            fetchAndRenderProducts();
-            renderCart();
-            setInterval(fetchAndRenderProducts, 1000);
+            listenToProducts();
+            listenToLogo();
         };
 
-        function loadStoreLogo() {
-            const savedLogo = localStorage.getItem('th_logo');
-            if (savedLogo) document.getElementById('storeLogoImg').src = savedLogo;
+        function listenToLogo() {
+            db.collection("settings").doc("logo").onSnapshot(doc => {
+                if (doc.exists && doc.data().url) {
+                    document.getElementById("storeLogoImg").src = doc.data().url;
+                }
+            });
         }
 
-        function getStoredProductsList() {
-            let defaultProducts = [
-                { id: 1, name: 'سيروم أنوا بيتش (Anua Peach 70)', price: 450, category: 'العناية بالبشرة', description: 'سيروم كوري غني بمستخلص الخوخ والنياسيناميد لتصفية البشرة وإعطائها نضارة فورية.', image: 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=300&q=80' },
-                { id: 2, name: 'كولاجين البرتقال الطبيعي', price: 350, category: 'العناية بالشعر', description: 'مشروب ومكمل كولاجين طبيعي بنكهة البرتقال لتقوية الشعر وتغذية البشرة.', image: 'https://images.unsplash.com/photo-1608248597359-9945c57b7852?auto=format&fit=crop&w=300&q=80' },
-                { id: 3, name: 'مرطب الشفاه الكوري', price: 200, category: 'المكياج', description: 'مرطب شفاه مغذي ومرطب بعمق يدوم طويلاً.', image: 'https://images.unsplash.com/photo-1586495777744-4413f21062fa?auto=format&fit=crop&w=300&q=80' }
-            ];
-            const saved = localStorage.getItem('th_products');
-            return saved ? JSON.parse(saved) : defaultProducts;
+        function listenToProducts() {
+            db.collection("products").onSnapshot(snapshot => {
+                allProducts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderProducts();
+            });
         }
 
-        function fetchAndRenderProducts() {
-            let products = getStoredProductsList();
-            const currentHash = JSON.stringify(products);
-            if (currentHash !== lastProductsHash) {
-                lastProductsHash = currentHash;
-                const container = document.getElementById('productsGrid');
-                container.innerHTML = products.map(p => `
-                    <div class="bg-white p-4 rounded-xl shadow flex gap-4 items-center border border-gray-100 hover:border-pink-300 transition">
-                        <img src="${p.image}" alt="${p.name}" class="w-20 h-20 object-cover rounded-lg cursor-pointer" onclick="showProductDetails(${p.id})">
-                        <div class="flex-1">
-                            <span class="text-xs bg-pink-100 text-pink-600 px-2 py-1 rounded font-bold">${p.category}</span>
-                            <h3 class="font-bold text-gray-800 mt-1 cursor-pointer hover:text-pink-600" onclick="showProductDetails(${p.id})">${p.name}</h3>
-                            <p class="text-pink-600 font-bold mt-1">${p.price} ج.م</p>
-                            <div class="mt-2 flex gap-2">
-                                <button onclick="showProductDetails(${p.id})" class="bg-gray-100 text-gray-700 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-gray-200 transition">التفاصيل 👁️</button>
-                                <button onclick="addToCartDirect(${p.id})" class="bg-pink-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-pink-700 transition">إضافة للسلة +</button>
-                            </div>
+        function renderProducts() {
+            const container = document.getElementById("productsGrid");
+            if (allProducts.length === 0) {
+                container.innerHTML = `<p class="text-gray-400">لا توجد منتجات متاحة حالياً.</p>`;
+                return;
+            }
+            container.innerHTML = allProducts.map(p => `
+                <div class="bg-white p-4 rounded-xl shadow flex gap-4 items-center border border-gray-100">
+                    <img src="${p.image}" alt="${p.name}" class="w-20 h-20 object-cover rounded-lg cursor-pointer" onclick="showDetails('${p.id}')">
+                    <div class="flex-1">
+                        <span class="text-xs bg-pink-100 text-pink-600 px-2 py-1 rounded font-bold">${p.category || 'عام'}</span>
+                        <h3 class="font-bold text-gray-800 mt-1 cursor-pointer" onclick="showDetails('${p.id}')">${p.name}</h3>
+                        <p class="text-pink-600 font-bold mt-1">${p.price} ج.م</p>
+                        <div class="mt-2 flex gap-2">
+                            <button onclick="showDetails('${p.id}')" class="bg-gray-100 text-gray-700 px-3 py-1.5 rounded-lg text-xs font-bold">التفاصيل 👁️</button>
+                            <button onclick="addToCart('${p.id}', 1)" class="bg-pink-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold">إضافة للسلة +</button>
                         </div>
                     </div>
-                `).join('');
-            }
+                </div>
+            `).join('');
         }
 
-        function showProductDetails(productId) {
-            const products = getStoredProductsList();
-            const product = products.find(p => p.id === productId);
-            if (!product) return;
+        function showDetails(id) {
+            const p = allProducts.find(item => item.id === id);
+            if (!p) return;
+            document.getElementById("storeSection").classList.add("hidden");
+            document.getElementById("myOrdersSection").classList.add("hidden");
+            const sec = document.getElementById("productDetailsSection");
+            sec.classList.remove("hidden");
 
-            document.getElementById('storeSection').classList.add('hidden');
-            document.getElementById('myOrdersSection').classList.add('hidden');
-            const detailsSection = document.getElementById('productDetailsSection');
-            detailsSection.classList.remove('hidden');
-
-            document.getElementById('productDetailsContent').innerHTML = `
+            document.getElementById("productDetailsContent").innerHTML = `
                 <div class="flex flex-col md:flex-row gap-6 items-center">
-                    <img src="${product.image}" alt="${product.name}" class="w-full md:w-64 h-64 object-cover rounded-xl shadow border">
+                    <img src="${p.image}" alt="${p.name}" class="w-full md:w-64 h-64 object-cover rounded-xl shadow border">
                     <div class="flex-1 space-y-3">
-                        <span class="text-xs bg-pink-100 text-pink-600 px-3 py-1 rounded font-bold">${product.category}</span>
-                        <h2 class="text-2xl font-bold text-gray-800">${product.name}</h2>
-                        <p class="text-pink-600 font-bold text-xl">${product.price} ج.م</p>
-                        <p class="text-gray-600 text-sm leading-relaxed">${product.description || 'منتج عالي الجودة للعناية والتجميل.'}</p>
-                        
-                        <div class="flex items-center gap-3 pt-2">
-                            <label class="font-bold text-sm text-gray-700">الكمية:</label>
-                            <input type="number" id="detailQty" value="1" min="1" max="50" class="w-20 p-2 border rounded-lg text-center font-bold focus:outline-pink-500">
+                        <span class="text-xs bg-pink-100 text-pink-600 px-3 py-1 rounded font-bold">${p.category || 'عام'}</span>
+                        <h2 class="text-2xl font-bold text-gray-800">${p.name}</h2>
+                        <p class="text-pink-600 font-bold text-xl">${p.price} ج.م</p>
+                        <p class="text-gray-600 text-sm">${p.description || 'منتج عالي الجودة.'}</p>
+                        <div class="flex items-center gap-3">
+                            <label class="font-bold text-sm">الكمية:</label>
+                            <input type="number" id="detailQty" value="1" min="1" class="w-20 p-2 border rounded-lg text-center font-bold">
                         </div>
-
-                        <button onclick="addDetailedToCart(${product.id})" class="w-full bg-pink-600 text-white py-3 rounded-xl font-bold hover:bg-pink-700 transition shadow">إضافة إلى سلة المشتريات 🛒</button>
+                        <button onclick="addToCart('${p.id}', parseInt(document.getElementById('detailQty').value))" class="w-full bg-pink-600 text-white py-3 rounded-xl font-bold">إضافة لسلة المشتريات 🛒</button>
                     </div>
                 </div>
             `;
-            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         function backToStore() {
-            document.getElementById('productDetailsSection').classList.add('hidden');
-            document.getElementById('myOrdersSection').classList.add('hidden');
-            document.getElementById('storeSection').classList.remove('hidden');
+            document.getElementById("productDetailsSection").classList.add("hidden");
+            document.getElementById("myOrdersSection").classList.add("hidden");
+            document.getElementById("storeSection").classList.remove("hidden");
         }
 
-        function addToCartDirect(productId) {
-            const products = getStoredProductsList();
-            const product = products.find(p => p.id === productId);
-            if (product) {
-                cart.push({ ...product, quantity: 1 });
+        function addToCart(id, qty) {
+            const p = allProducts.find(item => item.id === id);
+            if (p) {
+                cart.push({ ...p, quantity: qty });
                 renderCart();
-                alert('تم إضافة المنتج إلى السلة بنجاح!');
-            }
-        }
-
-        function addDetailedToCart(productId) {
-            const products = getStoredProductsList();
-            const product = products.find(p => p.id === productId);
-            const qty = parseInt(document.getElementById('detailQty').value) || 1;
-            if (product) {
-                cart.push({ ...product, quantity: qty });
-                renderCart();
-                alert(`تمت إضافة (${qty}) قطعة بنجاح للسلة!`);
+                alert(`تم إضافة ${qty} قطعة إلى السلة!`);
                 backToStore();
             }
         }
@@ -183,57 +180,47 @@
         }
 
         function renderCart() {
-            const list = document.getElementById('cartItemsList');
-            const form = document.getElementById('checkoutForm');
-            const badge = document.getElementById('cartCountBadge');
-            
-            const totalItemsCount = cart.reduce((sum, item) => sum + item.quantity, 0);
-            badge.innerText = `${totalItemsCount} منتجات`;
+            const list = document.getElementById("cartItemsList");
+            const form = document.getElementById("checkoutForm");
+            const badge = document.getElementById("cartCountBadge");
+            const totalQty = cart.reduce((sum, item) => sum + item.quantity, 0);
+            badge.innerText = `${totalQty} منتجات`;
 
             if (cart.length === 0) {
-                list.innerHTML = `<p class="text-gray-400 py-2">السلة فارغة حالياً. قم بإضافة منتجات من الأعلى.</p>`;
-                form.classList.add('hidden');
+                list.innerHTML = `<p class="text-gray-400 py-2">السلة فارغة حالياً.</p>`;
+                form.classList.add("hidden");
                 return;
             }
 
             let subtotal = 0;
             let deliveryFee = 50;
             list.innerHTML = cart.map((item, i) => {
-                let itemTotal = item.price * item.quantity;
-                subtotal += itemTotal;
+                let t = item.price * item.quantity;
+                subtotal += t;
                 return `
-                    <div class="py-3 flex justify-between items-center">
+                    <div class="py-2 flex justify-between items-center">
                         <div>
-                            <h4 class="font-bold text-sm text-gray-800">${item.name}</h4>
-                            <span class="text-xs text-gray-500">${item.price} ج.م × ${item.quantity} = <strong class="text-pink-600">${itemTotal} ج.م</strong></span>
+                            <h4 class="font-bold text-sm">${item.name}</h4>
+                            <span class="text-xs text-gray-500">${item.price} ج.م × ${item.quantity} = ${t} ج.م</span>
                         </div>
-                        <button onclick="removeFromCart(${i})" class="text-red-500 text-xs font-bold hover:underline">حذف</button>
+                        <button onclick="removeFromCart(${i})" class="text-red-500 text-xs font-bold">حذف</button>
                     </div>
                 `;
             }).join('') + `
-                <div class="py-2 text-sm text-gray-600 flex justify-between border-t mt-2 pt-3">
-                    <span>مجموع المنتجات:</span>
-                    <span>${subtotal} ج.م</span>
-                </div>
-                <div class="py-2 text-sm text-gray-600 flex justify-between">
-                    <span>رسوم التوصيل:</span>
-                    <span>${deliveryFee} ج.م</span>
-                </div>
-                <div class="py-3 font-bold text-lg text-gray-800 flex justify-between border-t">
-                    <span>الإجمالي النهائي:</span>
-                    <span class="text-green-600">${subtotal + deliveryFee} ج.م</span>
-                </div>
+                <div class="py-2 text-sm flex justify-between border-t mt-2"><span>المنتجات:</span><span>${subtotal} ج.م</span></div>
+                <div class="py-2 text-sm flex justify-between"><span>التوصيل:</span><span>${deliveryFee} ج.م</span></div>
+                <div class="py-2 font-bold text-lg flex justify-between border-t text-green-600"><span>الإجمالي:</span><span>${subtotal + deliveryFee} ج.م</span></div>
             `;
-            form.classList.remove('hidden');
+            form.classList.remove("hidden");
         }
 
-        function submitOrderToWhatsApp() {
-            const name = document.getElementById('custName').value.trim();
-            const phone = document.getElementById('custPhone').value.trim();
-            const address = document.getElementById('custAddress').value.trim();
+        async function submitOrder() {
+            const name = document.getElementById("custName").value.trim();
+            const phone = document.getElementById("custPhone").value.trim();
+            const address = document.getElementById("custAddress").value.trim();
 
             if (!name || !phone || !address) {
-                alert('الرجاء كتابة الاسم ورقم الهاتف والعنوان كاملاً!');
+                alert("الرجاء ملء جميع البيانات المطلوب إدخالها!");
                 return;
             }
 
@@ -241,84 +228,67 @@
             let deliveryFee = 50;
             let total = subtotal + deliveryFee;
 
-            // بناء رسالة الواتساب
-            let message = `*🛍️ طلب جديد من متجر TH Cosmetics*\n\n`;
-            message += `👤 *الاسم:* ${name}\n`;
-            message += `📞 *الهاتف:* ${phone}\n`;
-            message += `📍 *العنوان:* ${address}\n\n`;
-            message += `📦 *المنتجات المطلوبة:*\n`;
-            
-            cart.forEach((item, index) => {
-                message += `${index + 1}. ${item.name} (الكمية: ${item.quantity}) - ${item.price * item.quantity} ج.م\n`;
-            });
-
-            message += `\n🏷️ *سعر المنتجات:* ${subtotal} ج.م`;
-            message += `\n🚚 *رسوم التوصيل:* ${deliveryFee} ج.م`;
-            message += `\n💰 *الإجمالي النهائي:* ${total} ج.م`;
-
-            // حفظ الطلب محلياً للعميل لكي يراه في "طلباتي"
             const newOrder = {
-                id: Date.now(),
-                date: new Date().toLocaleString('ar-EG'),
                 name, phone, address,
-                items: [...cart],
-                total,
-                status: 'قيد الانتظار (تم إرساله للواتساب)'
+                items: cart,
+                subtotal, deliveryFee, total,
+                status: "قيد الانتظار",
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
             };
-            let existingOrders = JSON.parse(localStorage.getItem('th_orders') || '[]');
-            existingOrders.unshift(newOrder);
-            localStorage.setItem('th_orders', JSON.stringify(existingOrders));
 
-            // ضع رقم هاتفك هنا بدلاً من أصفار أو استبدل الرقم برقمك الخاص
-            const adminWhatsApp = "201147305691"; 
-            const encodedMessage = encodeURIComponent(message);
-            
-            // فتح الواتساب تلقائياً
-            window.open(`https://wa.me/${adminWhatsApp}?text=${encodedMessage}`, '_blank');
+            try {
+                const docRef = await db.collection("orders").add(newOrder);
+                
+                let myOrders = JSON.parse(localStorage.getItem("th_my_orders") || "[]");
+                myOrders.unshift({ id: docRef.id, ...newOrder, date: new Date().toLocaleDateString('ar-EG') });
+                localStorage.setItem("th_my_orders", JSON.stringify(myOrders));
 
-            cart = [];
-            renderCart();
-            backToStore();
+                cart = [];
+                renderCart();
+                document.getElementById("custName").value = "";
+                document.getElementById("custPhone").value = "";
+                document.getElementById("custAddress").value = "";
+
+                document.getElementById("confirmedOrderId").innerText = "#" + docRef.id.slice(-5);
+                const alertBox = document.getElementById("successAlert");
+                alertBox.classList.remove("hidden");
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                setTimeout(() => alertBox.classList.add("hidden"), 7000);
+            } catch(e) {
+                alert("حدث خطأ أثناء إرسال الطلب، برجاء المحاولة لاحقاً.");
+            }
         }
 
         function openMyOrders() {
-            document.getElementById('storeSection').classList.add('hidden');
-            document.getElementById('productDetailsSection').classList.add('hidden');
-            const ordersSection = document.getElementById('myOrdersSection');
-            ordersSection.classList.remove('hidden');
+            document.getElementById("storeSection").classList.add("hidden");
+            document.getElementById("productDetailsSection").classList.add("hidden");
+            const sec = document.getElementById("myOrdersSection");
+            sec.classList.remove("hidden");
 
-            const container = document.getElementById('myOrdersList');
-            const orders = JSON.parse(localStorage.getItem('th_orders') || '[]');
+            const container = document.getElementById("myOrdersList");
+            const myOrders = JSON.parse(localStorage.getItem("th_my_orders") || "[]");
 
-            if (orders.length === 0) {
-                container.innerHTML = `<p class="text-gray-400 text-center py-6">لا توجد طلبات مسجلة على هذا الجهاز.</p>`;
+            if (myOrders.length === 0) {
+                container.innerHTML = `<p class="text-gray-400 text-center py-4">لا توجد طلبات مسجلة سابقة.</p>`;
                 return;
             }
 
-            container.innerHTML = orders.map(o => `
-                <div class="bg-gray-50 p-4 rounded-xl border border-pink-200 shadow-sm mb-3">
+            container.innerHTML = myOrders.map(o => `
+                <div class="bg-gray-50 p-4 rounded-xl border border-pink-200">
                     <div class="flex justify-between items-center mb-2">
-                        <span class="font-bold text-pink-600 text-sm">طلب رقم: #${o.id.toString().slice(-4)}</span>
-                        <span class="text-xs px-3 py-1 rounded-full font-bold bg-green-100 text-green-800">${o.status}</span>
+                        <span class="font-bold text-pink-600 text-sm">طلب رقم: #${o.id ? o.id.slice(-5) : '---'}</span>
+                        <span class="text-xs px-3 py-1 rounded-full font-bold bg-yellow-100 text-yellow-800">${o.status}</span>
                     </div>
-                    <div class="text-xs text-gray-500 mb-2">${o.date}</div>
-                    <div class="text-sm space-y-1 text-gray-700">
-                        <p><strong>الاسم:</strong> ${o.name}</p>
-                        <p><strong>العنوان:</strong> ${o.address}</p>
-                    </div>
-                    <div class="mt-2 bg-white p-2.5 rounded border">
-                        <span class="text-xs font-bold text-pink-700">المنتجات:</span>
-                        <ul class="list-disc list-inside text-xs mt-1 space-y-1">
-                            ${o.items.map(it => `<li>${it.name} (الكمية: ${it.quantity}) - <strong>${it.price * it.quantity} ج.م</strong></li>`).join('')}
+                    <p class="text-xs text-gray-700"><strong>الاسم:</strong> ${o.name} - ${o.phone}</p>
+                    <p class="text-xs text-gray-700"><strong>العنوان:</strong> ${o.address}</p>
+                    <div class="mt-2 bg-white p-2 rounded border">
+                        <ul class="text-xs space-y-1">
+                            ${o.items.map(it => `<li>${it.name} (${it.quantity} قطعة) - ${it.price * it.quantity} ج.م</li>`).join('')}
                         </ul>
                     </div>
-                    <div class="mt-3 flex justify-between items-center text-sm font-bold border-t pt-2">
-                        <span class="text-gray-600">الإجمالي شامل الدليفاري:</span>
-                        <span class="text-green-600">${o.total} ج.م</span>
-                    </div>
+                    <div class="mt-2 text-sm font-bold text-green-600 text-left">الإجمالي: ${o.total} ج.م</div>
                 </div>
             `).join('');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
     </script>
 </body>
