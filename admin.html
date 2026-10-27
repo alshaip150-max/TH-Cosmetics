@@ -19,7 +19,7 @@
         <!-- شاشة تسجيل الدخول -->
         <div id="loginScreen" class="bg-white p-8 rounded-xl shadow max-w-md mx-auto mt-12 text-center">
             <h2 class="text-2xl font-bold mb-4 text-gray-700">تسجيل دخول الأدمن</h2>
-            <p class="text-gray-500 mb-4 text-sm">أدخل كلمة المرور للوصول لوحة التحكم وإدارة المتجر</p>
+            <p class="text-gray-500 mb-4 text-sm">أدخل كلمة المرور للوصول للوحة التحكم</p>
             <input type="password" id="adminPass" placeholder="كلمة المرور (admin123)" class="w-full p-3 border rounded-lg mb-4 text-center focus:outline-pink-500">
             <button onclick="checkLogin()" class="w-full bg-pink-600 text-white py-3 rounded-lg font-bold hover:bg-pink-700">دخول اللوحة</button>
         </div>
@@ -53,12 +53,6 @@
                 <h2 class="text-xl font-bold text-gray-800 mb-4">📦 إدارة المنتجات الحالية (حذف)</h2>
                 <div id="adminProductsList" class="space-y-3"></div>
             </div>
-
-            <!-- الطلبات -->
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-2xl font-bold text-gray-800">📋 الطلبات الواردة</h2>
-            </div>
-            <div id="adminOrdersList" class="space-y-4"></div>
         </div>
     </main>
 
@@ -72,7 +66,7 @@
                 const currentLogo = localStorage.getItem('th_logo');
                 if (currentLogo) document.getElementById('storeLogoInput').value = currentLogo;
 
-                renderAdminData();
+                renderAdminProducts();
             } else {
                 alert('كلمة المرور غير صحيحة!');
             }
@@ -87,9 +81,9 @@
 
         function getStoredProducts() {
             let defaultProducts = [
-                { id: 1, name: 'سيروم أنوا بيتش (Anua Peach 70)', price: 450, category: 'العناية بالبشرة', description: 'سيروم كوري غني بمستخلص الخوخ والنياسيناميد لتصفية البشرة وإعطائها نضارة فورية وإزالة البقع.', image: 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=300&q=80' },
-                { id: 2, name: 'كولاجين البرتقال الطبيعي', price: 350, category: 'العناية بالشعر', description: 'مشروب ومكمل كولاجين طبيعي بنكهة البرتقال لتقوية الشعر، نضارة البشرة، ودعم المفاصل.', image: 'https://images.unsplash.com/photo-1608248597359-9945c57b7852?auto=format&fit=crop&w=300&q=80' },
-                { id: 3, name: 'مرطب الشفاه الكوري', price: 200, category: 'المكياج', description: 'مرطب شفاه مغذي ومرطب بعمق يدوم طويلاً، يمنح الشفاه مظهر وملمس ناعم وطبيعي.', image: 'https://images.unsplash.com/photo-1586495777744-4413f21062fa?auto=format&fit=crop&w=300&q=80' }
+                { id: 1, name: 'سيروم أنوا بيتش (Anua Peach 70)', price: 450, category: 'العناية بالبشرة', description: 'سيروم كوري غني بمستخلص الخوخ والنياسيناميد لتصفية البشرة.', image: 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=300&q=80' },
+                { id: 2, name: 'كولاجين البرتقال الطبيعي', price: 350, category: 'العناية بالشعر', description: 'مشروب ومكمل كولاجين طبيعي بنكهة البرتقال لتقوية الشعر.', image: 'https://images.unsplash.com/photo-1608248597359-9945c57b7852?auto=format&fit=crop&w=300&q=80' },
+                { id: 3, name: 'مرطب الشفاه الكوري', price: 200, category: 'المكياج', description: 'مرطب شفاه مغذي ومرطب بعمق يدوم طويلاً.', image: 'https://images.unsplash.com/photo-1586495777744-4413f21062fa?auto=format&fit=crop&w=300&q=80' }
             ];
             const saved = localStorage.getItem('th_products');
             if (saved) {
@@ -109,7 +103,7 @@
             const image = document.getElementById('newProdImage').value.trim();
 
             if (!name || isNaN(price) || !category || !image) {
-                alert('الرجاء إدخال بيانات المنتج الأساسية (الاسم، السعر، القسم، رابط الصورة)!');
+                alert('الرجاء إدخال البيانات الأساسية للمنتج!');
                 return;
             }
 
@@ -124,32 +118,17 @@
             document.getElementById('newProdDesc').value = '';
             document.getElementById('newProdImage').value = '';
 
-            renderAdminData();
-            alert('تم إضافة ونشر المنتج بنجاح في المتجر!');
+            renderAdminProducts();
+            alert('تم إضافة المنتج بنجاح في المتجر!');
         }
 
         function deleteProduct(productId) {
-            if (confirm('هل أنت متأكد من حذف هذا المنتج من المتجر؟')) {
+            if (confirm('هل أنت متأكد من حذف هذا المنتج؟')) {
                 let products = getStoredProducts();
                 products = products.filter(p => p.id !== productId);
                 localStorage.setItem('th_products', JSON.stringify(products));
-                renderAdminData();
+                renderAdminProducts();
             }
-        }
-
-        function updateOrderStatus(orderId, newStatus) {
-            let orders = JSON.parse(localStorage.getItem('th_orders') || '[]');
-            orders = orders.map(o => {
-                if (o.id === orderId) o.status = newStatus;
-                return o;
-            });
-            localStorage.setItem('th_orders', JSON.stringify(orders));
-            renderAdminData();
-        }
-
-        function renderAdminData() {
-            renderAdminProducts();
-            renderAdminOrders();
         }
 
         function renderAdminProducts() {
@@ -173,60 +152,6 @@
                     <button onclick="deleteProduct(${p.id})" class="bg-red-500 text-white px-3 py-1.5 rounded text-xs font-bold hover:bg-red-600">حذف 🗑️</button>
                 </div>
             `).join('');
-        }
-
-        function renderAdminOrders() {
-            const container = document.getElementById('adminOrdersList');
-            const orders = JSON.parse(localStorage.getItem('th_orders') || '[]');
-
-            if (orders.length === 0) {
-                container.innerHTML = `<div class="bg-white p-6 rounded-xl shadow text-center text-gray-400">لا توجد طلبات حتى الآن.</div>`;
-                return;
-            }
-
-            container.innerHTML = orders.map(o => {
-                let statusColor = 'bg-yellow-100 text-yellow-800';
-                if(o.status === 'جاري التجهيز') statusColor = 'bg-blue-100 text-blue-800';
-                if(o.status === 'جاري التوصيل') statusColor = 'bg-purple-100 text-purple-800';
-                if(o.status === 'تم الاستلام') statusColor = 'bg-green-100 text-green-800';
-
-                let sub = o.subtotal || (o.total - 50);
-
-                return `
-                    <div class="bg-white p-5 rounded-xl shadow border-r-4 border-pink-500 mb-4">
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="font-bold text-pink-600">طلب رقم: #${o.id.toString().slice(-4)}</span>
-                            <span class="text-xs px-3 py-1 rounded-full font-bold ${statusColor}">${o.status || 'قيد الانتظار'}</span>
-                        </div>
-                        <div class="text-xs text-gray-400 mb-3">${o.date}</div>
-                        <div class="text-sm space-y-1">
-                            <p><strong>الاسم:</strong> ${o.name}</p>
-                            <p><strong>الهاتف:</strong> ${o.phone}</p>
-                            <p><strong>العنوان:</strong> ${o.address}</p>
-                        </div>
-                        <div class="mt-3 bg-pink-50 p-3 rounded-lg">
-                            <strong class="text-xs text-pink-700">المنتجات المطلوبة:</strong>
-                            <ul class="list-disc list-inside text-sm mt-1">
-                                ${o.items.map(it => `<li>${it.name} (الكمية: ${it.quantity}) - <strong>${it.price * it.quantity} ج.م</strong></li>`).join('')}
-                            </ul>
-                        </div>
-                        <div class="mt-3 text-sm space-y-1 border-t pt-2 text-gray-600">
-                            <div class="flex justify-between"><span>سعر المنتجات:</span> <span>${sub} ج.م</span></div>
-                            <div class="flex justify-between"><span>رسوم التوصيل:</span> <span>50 ج.م</span></div>
-                            <div class="flex justify-between font-bold text-green-600 text-base pt-1 border-t"><span>الإجمالي النهائي:</span> <span>${o.total} ج.م</span></div>
-                        </div>
-                        <div class="mt-3 flex justify-between items-center border-t pt-3 flex-wrap gap-2">
-                            <span class="text-xs text-gray-400">تحديث حالة الطلب:</span>
-                            <div class="flex gap-1 flex-wrap">
-                                <button onclick="updateOrderStatus(${o.id}, 'قيد الانتظار')" class="px-2 py-1 text-xs bg-yellow-100 text-yellow-700 rounded font-bold">قيد الانتظار</button>
-                                <button onclick="updateOrderStatus(${o.id}, 'جاري التجهيز')" class="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded font-bold">جاري التجهيز</button>
-                                <button onclick="updateOrderStatus(${o.id}, 'جاري التوصيل')" class="px-2 py-1 text-xs bg-purple-100 text-purple-700 rounded font-bold">جاري التوصيل</button>
-                                <button onclick="updateOrderStatus(${o.id}, 'تم الاستلام')" class="px-2 py-1 text-xs bg-green-100 text-green-700 rounded font-bold">تم الاستلام ✓</button>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }).join('');
         }
     </script>
 </body>
